@@ -20,17 +20,17 @@ If you dont have snap command, see [Installing snapd](https://snapcraft.io/docs/
 sudo snap install microk8s --classic
 ```
 
-### Grant accees to MicroK8s group
+### Grant accees to MicroK8s group and start Kubernetes
 Add our user to the MicroK8s group
 ```console
 sudo usermod -a -G microk8s $USER
-sudo chown -R $USER ~/.kube
 newgrp microk8s
 ```
 
 Checking the status while Kubernetes starts
 ```console
 microk8s status --wait-ready
+sudo chown -R $USER ~/.kube
 ```
 
 Turning on the services you want
