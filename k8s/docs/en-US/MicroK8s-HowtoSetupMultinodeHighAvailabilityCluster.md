@@ -18,7 +18,7 @@ On the first MicroK8s instance run the add-node command. This node with host the
 microk8s add-node
 ```
 
-If you dont have working dns, add all the nodes to the hosts file
+If you dont have working dns, add all the nodes to the hosts file on all nodes.
 ```console
 sudo nano /etc/hosts
 ```
