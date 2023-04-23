@@ -41,28 +41,14 @@ sudo adduser $USER lxd
 newgrp lxd
 ```
 
-### Set firewall rules
-Enable ufw
-```console
-sudo ufw allow in on lxdfan0
-sudo ufw route allow in on lxdfan0
-sudo ufw route allow out on lxdfan0
-sudo ufw allow 8443
-```
-
-Check syslog if there are connection problems between nodes
-```console
-cat /var/log/syslog
-```
-
-### Initialise LXD
+### Initialize LXD
 LXD provides an interactive dialogue to configure your local cloud during the initialization procedure
 ```console
 lxd init
 ```
 
 The init script itself may vary depending on the version of LXD. You can use most default options in the dialogue. The important configuration options for Charmed Kubernetes are:  
-- Networking: Do NOT enable ipv6 networking on the bridge interface
+- LXD clustering: Enable if installation is to be clustered
 - Storage Pool: Use the 'dir' storage type
 
 ```console
@@ -122,6 +108,16 @@ cluster:
   cluster_token: ""
 ```
 
+### Set firewall rules
+Set ufw firewall rules
+```console
+sudo ufw allow in on lxdfan0
+sudo ufw route allow in on lxdfan0
+sudo ufw route allow out on lxdfan0
+sudo ufw allow 8443
+```
+
+### Add more nodes
 To add more nodes to the cluster, we will need to generate join tokens
 ```console
 lxc cluster add charmedjuju2
@@ -133,7 +129,12 @@ Then on each of the nodes, run **sudo lxd init** to add them to the cluster
 sudo lxd init
 ```
 
-> :warning: **Caution:**: On nodes joining the cluster, the lxd command has to be run with **sudo**.  
+> :warning: **Caution:** On nodes joining the cluster, the lxd command has to be run with **sudo**.  
+
+Check syslog if there are connection problems between nodes
+```console
+cat /var/log/syslog
+```
 
 ### Test installation
 When all nodes are added to the cluster, we're ready to test the installation
@@ -233,7 +234,7 @@ You should use the following command to retrieve it (create a .kube directory if
 juju scp kubernetes-control-plane/0:config ~/.kube/config
 ```
 
-> :warning: **Caution:**: If you have multiple clusters you will need to manage the config file rather than just replacing it. 
+> :warning: **Caution:** If you have multiple clusters you will need to manage the config file rather than just replacing it. 
 See the [Kubernetes documentation](https://kubernetes.io/docs/tasks/access-application-cluster/configure-access-multiple-clusters/) for more information on managing multiple clusters.
 
 ### Verify Kubernetes install
