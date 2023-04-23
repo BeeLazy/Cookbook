@@ -69,6 +69,8 @@ Since microk8s is a standard upstream kubectl, you can also drive other Kubernet
 microk8s dashboard-proxy
 ```
 
+![Kubernetes Dashboard](../../img/microk8s-1node.png "Kubernetes Dashboard")
+
 ### Start and stop Kubernetes
 Kubernetes is a collection of system services that talk to each other all the time.  
 If you don’t need them running in the background then you will save power by stopping them.  
