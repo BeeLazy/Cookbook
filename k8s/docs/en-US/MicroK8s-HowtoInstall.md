@@ -82,5 +82,5 @@ microk8s start
 ```
 
 ## Related links
-[Installing snapd - snapcraft.io](https://snapcraft.io/docs/installing-snapd)
+[Installing snapd - snapcraft.io](https://snapcraft.io/docs/installing-snapd)  
 [Install Kubernetes - ubuntu.com](https://ubuntu.com/kubernetes/install)  
