@@ -18,11 +18,91 @@ If you dont have working dns, add all the nodes to the hosts file on all nodes.
 sudo nano /etc/hosts
 ```
 
-### Enable firewall
+### Configure firewall
 Enable ufw
 ```console
 sudo ufw allow ssh
 sudo ufw enable
+```
+
+You can follow the guide from the [official website](https://linuxcontainers.org/lxd/docs/master/howto/network_bridge_firewalld/#ufw-add-rules-for-the-bridge) to allow lxdfan0 traffic.
+```console
+sudo ufw allow in on lxdfan0
+sudo ufw route allow in on lxdfan0
+sudo ufw route allow out on lxdfan0
+```
+
+Or we can add more spesific rules.  
+Add rules to ufw before.rules:
+```console
+sudo nano /etc/ufw/before.rules
+```
+
+Add the following rules before the COMMIT line.
+```console
+# Allow LXD Ports
+# Input
+-A ufw-before-input -i lxdfan0 -p icmp -m icmp --icmp-type 12 -m comment --comment "generated for LXD network lxdfan0" -j ACCEPT
+-A ufw-before-input -i lxdfan0 -p icmp -m icmp --icmp-type 11 -m comment --comment "generated for LXD network lxdfan0" -j ACCEPT
+-A ufw-before-input -i lxdfan0 -p icmp -m icmp --icmp-type 3 -m comment --comment "generated for LXD network lxdfan0" -j ACCEPT
+-A ufw-before-input -i lxdfan0 -p tcp -m tcp --dport 53 -m comment --comment "generated for LXD network lxdfan0" -j ACCEPT
+-A ufw-before-input -i lxdfan0 -p udp -m udp --dport 53 -m comment --comment "generated for LXD network lxdfan0" -j ACCEPT
+-A ufw-before-input -i lxdfan0 -p udp -m udp --dport 67 -m comment --comment "generated for LXD network lxdfan0" -j ACCEPT
+-A ufw-before-input -i eth0 -p tcp -m tcp --dport 8443 -m comment --comment "generated for LXD network eth0" -j ACCEPT
+# Forward
+-A ufw-before-forward -o lxdfan0 -m comment --comment "generated for LXD network lxdfan0" -j ACCEPT
+-A ufw-before-forward -i lxdfan0 -m comment --comment "generated for LXD network lxdfan0" -j ACCEPT
+# Output
+-A ufw-before-output -o lxdfan0 -p icmp -m icmp --icmp-type 12 -m comment --comment "generated for LXD network lxdfan0" -j ACCEPT
+-A ufw-before-output -o lxdfan0 -p icmp -m icmp --icmp-type 11 -m comment --comment "generated for LXD network lxdfan0" -j ACCEPT
+-A ufw-before-output -o lxdfan0 -p icmp -m icmp --icmp-type 3 -m comment --comment "generated for LXD network lxdfan0" -j ACCEPT
+-A ufw-before-output -o lxdfan0 -p tcp -m tcp --sport 53 -m comment --comment "generated for LXD network lxdfan0" -j ACCEPT
+-A ufw-before-output -o lxdfan0 -p udp -m udp --sport 53 -m comment --comment "generated for LXD network lxdfan0" -j ACCEPT
+-A ufw-before-output -o lxdfan0 -p udp -m udp --sport 67 -m comment --comment "generated for LXD network lxdfan0" -j ACCEPT
+```
+
+For IPv6 support:
+```console
+sudo nano /etc/ufw/before6.rules
+```
+
+Add the following rules before the COMMIT line.
+```console
+# Allow LXD Ports
+# Input
+-A ufw6-before-input -i lxdfan0 -p ipv6-icmp -m icmp6 --icmpv6-type 143 -m comment --comment "generated for LXD network lxdfan0" -j ACCEPT
+-A ufw6-before-input -i lxdfan0 -p ipv6-icmp -m icmp6 --icmpv6-type 136 -m comment --comment "generated for LXD network lxdfan0" -j ACCEPT
+-A ufw6-before-input -i lxdfan0 -p ipv6-icmp -m icmp6 --icmpv6-type 135 -m comment --comment "generated for LXD network lxdfan0" -j ACCEPT
+-A ufw6-before-input -i lxdfan0 -p ipv6-icmp -m icmp6 --icmpv6-type 133 -m comment --comment "generated for LXD network lxdfan0" -j ACCEPT
+-A ufw6-before-input -i lxdfan0 -p ipv6-icmp -m icmp6 --icmpv6-type 4 -m comment --comment "generated for LXD network lxdfan0" -j ACCEPT
+-A ufw6-before-input -i lxdfan0 -p ipv6-icmp -m icmp6 --icmpv6-type 3 -m comment --comment "generated for LXD network lxdfan0" -j ACCEPT
+-A ufw6-before-input -i lxdfan0 -p ipv6-icmp -m icmp6 --icmpv6-type 2 -m comment --comment "generated for LXD network lxdfan0" -j ACCEPT
+-A ufw6-before-input -i lxdfan0 -p ipv6-icmp -m icmp6 --icmpv6-type 1 -m comment --comment "generated for LXD network lxdfan0" -j ACCEPT
+-A ufw6-before-input -i lxdfan0 -p tcp -m tcp --dport 53 -m comment --comment "generated for LXD network lxdfan0" -j ACCEPT
+-A ufw6-before-input -i lxdfan0 -p udp -m udp --dport 53 -m comment --comment "generated for LXD network lxdfan0" -j ACCEPT
+-A ufw6-before-input -i lxdfan0 -p udp -m udp --dport 547 -m comment --comment "generated for LXD network lxdfan0" -j ACCEPT
+-A ufw6-before-input -i eth0 -p tcp -m tcp --dport 8443 -m comment --comment "generated for LXD network eth0" -j ACCEPT
+# Forward
+-A ufw6-before-forward -o lxdfan0 -m comment --comment "generated for LXD network lxdfan0" -j ACCEPT
+-A ufw6-before-forward -i lxdfan0 -m comment --comment "generated for LXD network lxdfan0" -j ACCEPT
+# Output
+-A ufw6-before-output -o lxdfan0 -p ipv6-icmp -m icmp6 --icmpv6-type 143 -m comment --comment "generated for LXD network lxdfan0" -j ACCEPT
+-A ufw6-before-output -o lxdfan0 -p ipv6-icmp -m icmp6 --icmpv6-type 136 -m comment --comment "generated for LXD network lxdfan0" -j ACCEPT
+-A ufw6-before-output -o lxdfan0 -p ipv6-icmp -m icmp6 --icmpv6-type 135 -m comment --comment "generated for LXD network lxdfan0" -j ACCEPT
+-A ufw6-before-output -o lxdfan0 -p ipv6-icmp -m icmp6 --icmpv6-type 134 -m comment --comment "generated for LXD network lxdfan0" -j ACCEPT
+-A ufw6-before-output -o lxdfan0 -p ipv6-icmp -m icmp6 --icmpv6-type 128 -m comment --comment "generated for LXD network lxdfan0" -j ACCEPT
+-A ufw6-before-output -o lxdfan0 -p ipv6-icmp -m icmp6 --icmpv6-type 4 -m comment --comment "generated for LXD network lxdfan0" -j ACCEPT
+-A ufw6-before-output -o lxdfan0 -p ipv6-icmp -m icmp6 --icmpv6-type 3 -m comment --comment "generated for LXD network lxdfan0" -j ACCEPT
+-A ufw6-before-output -o lxdfan0 -p ipv6-icmp -m icmp6 --icmpv6-type 2 -m comment --comment "generated for LXD network lxdfan0" -j ACCEPT
+-A ufw6-before-output -o lxdfan0 -p ipv6-icmp -m icmp6 --icmpv6-type 1 -m comment --comment "generated for LXD network lxdfan0" -j ACCEPT
+-A ufw6-before-output -o lxdfan0 -p tcp -m tcp --sport 53 -m comment --comment "generated for LXD network lxdfan0" -j ACCEPT
+-A ufw6-before-output -o lxdfan0 -p udp -m udp --sport 53 -m comment --comment "generated for LXD network lxdfan0" -j ACCEPT
+-A ufw6-before-output -o lxdfan0 -p udp -m udp --sport 547 -m comment --comment "generated for LXD network lxdfan0" -j ACCEPT
+```
+
+Restart firewall to apply settings:
+```console
+sudo ufw disable && sudo ufw enable
 ```
 
 ### Install LXD
@@ -54,67 +134,25 @@ The init script itself may vary depending on the version of LXD. You can use mos
 ```console
 beelazy@charmedjuju1:~$ lxd init
 Would you like to use LXD clustering? (yes/no) [default=no]: yes
-What IP address or DNS name should be used to reach this node? [default=192.168.0.228]: charmedjuju1
+What IP address or DNS name should be used to reach this node? [default=192.168.0.229]:
 Are you joining an existing cluster? (yes/no) [default=no]: no
-What name should be used to identify this node in the cluster? [default=charmedjuju1]: charmedjuju1
-Setup password authentication on the cluster? (yes/no) [default=no]: no
-Do you want to configure a new local storage pool? (yes/no) [default=yes]: yes
+What name should be used to identify this node in the cluster? [default=charmedjuju1]:
+Setup password authentication on the cluster? (yes/no) [default=no]:
+Do you want to configure a new local storage pool? (yes/no) [default=yes]:
 Name of the storage backend to use (btrfs, dir, lvm, zfs) [default=zfs]: dir
-Do you want to configure a new remote storage pool? (yes/no) [default=no]: no
-Would you like to connect to a MAAS server? (yes/no) [default=no]: no
-Would you like to configure LXD to use an existing bridge or host interface? (yes/no) [default=no]: no
-Would you like to create a new Fan overlay network? (yes/no) [default=yes]: yes
-What subnet should be used as the Fan underlay? [default=auto]: auto
-Would you like stale cached images to be updated automatically? (yes/no) [default=yes]: yes
-Would you like a YAML "lxd init" preseed to be printed? (yes/no) [default=no]: yes
-config:
-  core.https_address: charmedjuju1:8443
-networks:
-- config:
-    bridge.mode: fan
-    fan.underlay_subnet: auto
-  description: ""
-  name: lxdfan0
-  type: ""
-  project: default
-storage_pools:
-- config: {}
-  description: ""
-  name: local
-  driver: dir
-profiles:
-- config: {}
-  description: ""
-  devices:
-    eth0:
-      name: eth0
-      network: lxdfan0
-      type: nic
-    root:
-      path: /
-      pool: local
-      type: disk
-  name: default
-projects: []
-cluster:
-  server_name: charmedjuju1
-  enabled: true
-  member_config: []
-  cluster_address: ""
-  cluster_certificate: ""
-  server_address: ""
-  cluster_password: ""
-  cluster_certificate_path: ""
-  cluster_token: ""
+Do you want to configure a new remote storage pool? (yes/no) [default=no]:
+Would you like to connect to a MAAS server? (yes/no) [default=no]:
+Would you like to configure LXD to use an existing bridge or host interface? (yes/no) [default=no]:
+Would you like to create a new Fan overlay network? (yes/no) [default=yes]:
+What subnet should be used as the Fan underlay? [default=auto]:
+Would you like stale cached images to be updated automatically? (yes/no) [default=yes]:
+Would you like a YAML "lxd init" preseed to be printed? (yes/no) [default=no]:
 ```
 
-### Set firewall rules
-Set ufw firewall rules
+Maybe need to disabled LXDs firewall functionality
 ```console
-sudo ufw allow in on lxdfan0
-sudo ufw route allow in on lxdfan0
-sudo ufw route allow out on lxdfan0
-sudo ufw allow 8443
+lxc network set lxdfan0 ipv6.firewall false
+lxc network set lxdfan0 ipv4.firewall false
 ```
 
 ### Add more nodes
@@ -129,6 +167,17 @@ Then on each of the nodes, run **sudo lxd init** to add them to the cluster
 sudo lxd init
 ```
 
+```console
+beelazy@charmedjuju3:~$ sudo lxd init
+Would you like to use LXD clustering? (yes/no) [default=no]: yes
+What IP address or DNS name should be used to reach this node? [default=192.168.0.205]:
+Are you joining an existing cluster? (yes/no) [default=no]: yes
+Do you have a join token? (yes/no/[token]) [default=no]: eyJzZXJ2....
+All existing data is lost when joining a cluster, continue? (yes/no) [default=no] yes
+Choose "source" property for storage pool "local":
+Would you like a YAML "lxd init" preseed to be printed? (yes/no) [default=no]:
+```
+
 > :warning: **Caution:** On nodes joining the cluster, the lxd command has to be run with **sudo**.  
 
 Check syslog if there are connection problems between nodes
@@ -140,35 +189,35 @@ cat /var/log/syslog
 When all nodes are added to the cluster, we're ready to test the installation
 ```console
 beelazy@charmedjuju1:~$ sudo lxd cluster show
-# Latest dqlite segment ID: 1024
+# Latest dqlite segment ID: 28
 
 members:
 - id: 1
   name: charmedjuju1
-  address: charmedjuju1:8443
+  address: 192.168.0.229:8443
   role: voter
 - id: 2
   name: charmedjuju2
-  address: charmedjuju2:8443
+  address: 192.168.0.200:8443
   role: voter
 - id: 3
   name: charmedjuju3
-  address: charmedjuju3:8443
+  address: 192.168.0.205:8443
   role: voter
 ```
 
 ```console
 beelazy@charmedjuju1:~$ lxc cluster list
-+--------------+---------------------------+-----------------+--------------+----------------+-------------+--------+-------------------+
-|     NAME     |            URL            |      ROLES      | ARCHITECTURE | FAILURE DOMAIN | DESCRIPTION | STATE  |      MESSAGE      |
-+--------------+---------------------------+-----------------+--------------+----------------+-------------+--------+-------------------+
-| charmedjuju1 | https://charmedjuju1:8443 | database-leader | x86_64       | default        |             | ONLINE | Fully operational |
-|              |                           | database        |              |                |             |        |                   |
-+--------------+---------------------------+-----------------+--------------+----------------+-------------+--------+-------------------+
-| charmedjuju2 | https://charmedjuju2:8443 | database        | x86_64       | default        |             | ONLINE | Fully operational |
-+--------------+---------------------------+-----------------+--------------+----------------+-------------+--------+-------------------+
-| charmedjuju3 | https://charmedjuju3:8443 | database        | x86_64       | default        |             | ONLINE | Fully operational |
-+--------------+---------------------------+-----------------+--------------+----------------+-------------+--------+-------------------+
++--------------+----------------------------+-----------------+--------------+----------------+-------------+--------+-------------------+
+|     NAME     |            URL             |      ROLES      | ARCHITECTURE | FAILURE DOMAIN | DESCRIPTION | STATE  |      MESSAGE      |
++--------------+----------------------------+-----------------+--------------+----------------+-------------+--------+-------------------+
+| charmedjuju1 | https://192.168.0.229:8443 | database-leader | x86_64       | default        |             | ONLINE | Fully operational |
+|              |                            | database        |              |                |             |        |                   |
++--------------+----------------------------+-----------------+--------------+----------------+-------------+--------+-------------------+
+| charmedjuju2 | https://192.168.0.200:8443 | database        | x86_64       | default        |             | ONLINE | Fully operational |
++--------------+----------------------------+-----------------+--------------+----------------+-------------+--------+-------------------+
+| charmedjuju3 | https://192.168.0.205:8443 | database        | x86_64       | default        |             | ONLINE | Fully operational |
++--------------+----------------------------+-----------------+--------------+----------------+-------------+--------+-------------------+
 ```
 
 And finally, test a deployment
@@ -177,6 +226,14 @@ lxc launch images:alpine/3.11 web1
 lxc launch images:alpine/3.11 web2
 lxc launch images:alpine/3.11 web3
 lxc list
+```
+
+Restarting LXD
+```console
+# Restart all containers
+systemctl restart snap.lxd.daemon
+# Restart only the daemon/API.
+systemctl reload snap.lxd.daemon
 ```
 
 ### Install Juju
@@ -271,5 +328,6 @@ The URL for the dashboard will then be
 ## Related links
 [Installing snapd - snapcraft.io](https://snapcraft.io/docs/installing-snapd)  
 [Install Kubernetes - ubuntu.com](https://ubuntu.com/kubernetes/install)  
+[Containers LXD - ubuntu.com](https://ubuntu.com/server/docs/containers-lxd)  
 [Install troubleshooting guide - ubuntu.com](https://ubuntu.com/kubernetes/docs/install-local#troubleshooting)  
 [Creating a LXD cluster - acloudguru.com](https://acloudguru.com/hands-on-labs/creating-a-lxd-cluster)  
