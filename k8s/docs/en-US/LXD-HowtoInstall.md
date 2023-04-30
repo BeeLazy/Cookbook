@@ -53,7 +53,7 @@ sudo apt-get update && sudo apt-get dist-upgrade
 
 ### Kernel preparation <a id="kernel-preparation"></a>
 In general, Ubuntu should have all the desired features enabled by default. One exception to this is that in order to enable swap accounting the boot argument **swapaccount=1** must be set.  
-This can be done by appending it to the **GRUB_CMDLINE_LINUX_DEFAULT=**variable in /etc/default/grub, then running 'update-grub' as root and rebooting.
+This can be done by appending it to the **GRUB_CMDLINE_LINUX_DEFAULT=** variable in /etc/default/grub, then running 'update-grub' as root and rebooting.
 ```console
 sudo nano /etc/default/grub
 sudo update-grub
@@ -242,7 +242,7 @@ If a voter member goes offline, a stand-by member is automatically promoted to v
 The default number of voter members (**cluster.max_voters**) is three. The default number of stand-by members (**cluster.max_standby**) is two. With this configuration, your cluster will 
 remain operational as long as you switch off at most one voting member at a time.  
 
-There are two ways to add a member to an existing cluster; using the trust password or using a join token.
+There are two ways to add a member to an existing cluster; using the trust password or using a join token. Nodes can also be added noninteractively.  
 
 #### Method1: Adding node with trust password <a id="adding-node-with-trust-password"></a>
 The trust password can be set at initial configuration using **sudo lxd init**, or after the fact using:
@@ -295,7 +295,7 @@ Would you like a YAML "lxd init" preseed to be printed? (yes/no) [default=no]:
 > :warning: **Caution:** On nodes joining the cluster, the lxd command has to be run with **sudo**.  
 
 #### Method3: Adding nodes noninteractively <a id="adding-nodes-noninteractively"></a>
-Too add nodes noninteractively, you can create a preseed file for the bootstrap node with the configuration. 
+To add nodes noninteractively, you can create a preseed file for the bootstrap node with the configuration. 
 See [LXD preeseed documentation](https://linuxcontainers.org/lxd/docs/stable-4.0/clustering/#preseed) for more information.
 
 And then bootstrap the node with it:
@@ -399,8 +399,8 @@ The command to create and start a container is
 lxc launch remote:image containername
 ```
 
-Images are identified by their hash, but are also aliased. The **ubuntu** remote knows many aliases such as **22.04** and **jammy*. 
-A list of all images available from the Ubuntu Server can be seen using:
+Images are identified by their hash, but are also aliased. The **ubuntu** remote knows many aliases such as **22.04** and **jammy**. 
+A list of all images available from the Ubuntu image server can be seen using:
 ```console
 lxc image list ubuntu:
 ```
@@ -623,15 +623,15 @@ Check the amount of free and used memory on the parent system and on the two con
 ```console
 bee@lxdn1:~$ free -m
                total        used        free      shared  buff/cache   available
-Mem:            2035         640         847           3         547        1003
-Swap:           2536          81        2455
+Mem:            2035          70        1763           0         201        1964
+Swap:              0           0           0
 bee@lxdn1:~$ lxc exec j1 -- free -m
                total        used        free      shared  buff/cache   available
 Mem:            2035          70        1763           0         201        1964
 Swap:              0           0           0
 bee@lxdn1:~$ lxc exec limitedc1 -- free -m
               total        used        free      shared  buff/cache   available
-Mem:            192          29         131           0          30         162
+Mem:            192          70         122           0          30         162
 Swap:             0           0           0
 ```
 
@@ -861,7 +861,7 @@ include the **default** profile, which provides a network interface **eth0**.
 
 To mask a device which would be inherited from a profile but which should not be in the final container, define a device by the same name but of type 'none':
 ```console
-# Note: This was eth0 in official docs
+# Note: This was eth1 in official docs
 lxc config device add j1 eth0 none
 ```
 
@@ -880,11 +880,11 @@ Please see the 'UID mapping' section below.
 
 ### Limits <a id="limits"></a>
 LXD supports flexible constraints on the resources which containers can consume. The limits come in the following categories:
-- CPU: limit cpu available to the container in several ways.
-- Disk: configure the priority of I/O requests under load
-- RAM: configure memory and swap availability
-- Network: configure the network priority under load
-- Processes: limit the number of concurrent processes in the container.
+- **CPU**: limit cpu available to the container in several ways.
+- **Disk**: configure the priority of I/O requests under load
+- **RAM**: configure memory and swap availability
+- **Network**: configure the network priority under load
+- **Processes**: limit the number of concurrent processes in the container.
 
 For a full list of limits known to LXD, see the [configuration documentation](https://linuxcontainers.org/lxd/docs/latest/reference/instance_options/#instance-options-limits).
 
@@ -972,3 +972,4 @@ The configuration file which was used may be found under
 [Installing snapd - snapcraft.io](https://snapcraft.io/docs/installing-snapd)  
 [Containers LXD - ubuntu.com](https://ubuntu.com/server/docs/containers-lxd)  
 [LXD Docs - linuxcontainers.org](https://linuxcontainers.org/lxd/docs/stable-5.0/#)
+Yo, Tailor tell us what you want, what you really, really want. So tell us what you want, what you really, really want
