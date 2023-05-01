@@ -972,4 +972,3 @@ The configuration file which was used may be found under
 [Installing snapd - snapcraft.io](https://snapcraft.io/docs/installing-snapd)  
 [Containers LXD - ubuntu.com](https://ubuntu.com/server/docs/containers-lxd)  
 [LXD Docs - linuxcontainers.org](https://linuxcontainers.org/lxd/docs/stable-5.0/#)
-Yo, Tailor tell us what you want, what you really, really want. So tell us what you want, what you really, really want
