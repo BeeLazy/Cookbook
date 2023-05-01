@@ -963,10 +963,9 @@ Container logfiles for container j1 may be seen using:
 lxc info j1 --show-log
 ```
 
-The configuration file which was used may be found under  
-**/var/log/lxd/j1/lxc.conf** while apparmor profiles can be found in  
-**/var/lib/lxd/security/apparmor/profiles/j1** and seccomp profiles in  
-**/var/lib/lxd/security/seccomp/j1**.  
+The configuration file which was used may be found under **/var/log/lxd/j1/lxc.conf**  
+while apparmor profiles can be found in **/var/lib/lxd/security/apparmor/profiles/j1**  
+and seccomp profiles in **/var/lib/lxd/security/seccomp/j1**.  
 
 ## Related links <a id="related-links"></a>
 [Installing snapd - snapcraft.io](https://snapcraft.io/docs/installing-snapd)  
