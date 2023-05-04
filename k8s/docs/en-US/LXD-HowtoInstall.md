@@ -48,7 +48,7 @@ LXC (lex-see) is a program which creates and administers 'containers' on a local
 ### Update Ubuntu hosts <a id="update-ubuntu-hosts"></a>
 First we'll make sure our Ubuntu hosts are up to date
 ```console
-sudo apt-get update && sudo apt-get dist-upgrade
+sudo apt-get update && sudo apt-get dist-upgrade && sudo snap refresh
 ```
 
 ### Kernel preparation <a id="kernel-preparation"></a>
@@ -152,7 +152,12 @@ sudo ufw disable && sudo ufw enable
 LXD can be installed via snap.  
 If you dont have snap command, see [Installing snapd](https://snapcraft.io/docs/installing-snapd)  
 
-LXD is pre-installed on Ubuntu Server. On other systems, the lxd package can be installed using:
+LXD is pre-installed on Ubuntu Server. We will update the LXD to the latest stable release:
+```console
+sudo snap remove --purge lxd && sudo snap install lxd
+```
+
+On other systems, the lxd package can be installed using:
 ```console
 sudo snap install lxd
 ```
