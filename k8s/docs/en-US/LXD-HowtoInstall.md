@@ -7,8 +7,9 @@ This document describes how to install [LXD](https://linuxcontainers.org/) on Ub
 LXD (lex-dee) is the lightervisor, or lightweight container hypervisor.  
 LXC (lex-see) is a program which creates and administers 'containers' on a local system. It also provides an API to allow higher level managers, such as LXD, to administer containers.
 
-## Table of content
-1. [Installation](#installation)
+## Table of contents
+1. [Installation demo](#installation-demo)
+2. [Installation](#installation)
     1. [Update Ubuntu hosts](#update-ubuntu-hosts)
 	2. [Kernel preparation](#kernel-preparation)
 	3. [Configure firewall](#configure-firewall)
@@ -20,7 +21,7 @@ LXC (lex-see) is a program which creates and administers 'containers' on a local
 		2. [Method2: Adding node with cluster add command](#adding-node-with-cluster-add-command)
 		3. [Method3: Adding nodes noninteractively](#adding-nodes-noninteractively)
 	8. [Authentication](#authentication)
-2. [Common operations](#common-operations)
+3. [Common operations](#common-operations)
     1. [List nodes with lxd](#list-nodes-with-lxd)
 	2. [List nodes with lxc](#list-nodes-with-lcx)
 	3. [Restarting LXD](#restarting-lxd)
@@ -39,9 +40,13 @@ LXC (lex-see) is a program which creates and administers 'containers' on a local
 	16. [Apparmor](#apparmor)
 	17. [Seccomp](#seccomp)
 	18. [Raw LXC configuration](#raw-lxc-configuration)
-3. [Cleanup](#cleanup)
-4. [Troubleshooting](#troubleshooting)
-5. [Related links](#related-links)	
+4. [Cleanup](#cleanup)
+5. [Troubleshooting](#troubleshooting)
+6. [Related links](#related-links)	
+
+## Installation demo <a id="installation-demo"></a>
+Demo of installing a LXD cluster with 3 nodes on Ubuntu Server:
+![Installing LXD Cluster GIF](../../img/LXD-Install3NodeCluster.gif "Installing LXD Cluster Demo")
 
 ## Installation <a id="installation"></a>
 
