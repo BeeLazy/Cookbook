@@ -30,7 +30,7 @@ Nested virtualization is a feature that allows you to run Hyper-V inside of a Hy
 - The Hyper-V host must be Windows Server 2022/Windows 11 or greater
 - VM configuration version 10.0 or greater
 
-notye: The guest can be any Windows supported guest operating system. Newer Windows operating systems may support enlightenments that improve performance.
+> :warning: **Caution:** The guest can be any Windows supported guest operating system. Newer Windows operating systems may support enlightenments that improve performance.
 
 ## Configure Nested Virtualization <a id="configure-nested-virtualization"></a>
 1. Create a virtual machine. See the prerequisites above for the required OS and VM versions.
@@ -77,19 +77,22 @@ First, a virtual NAT switch must be created in the host virtual machine (the "mi
 environments:
 ```powershell
 New-VMSwitch -Name VmNAT -SwitchType Internal
-New-NetNat –Name LocalNAT –InternalIPInterfaceAddressPrefix “192.168.100.0/24”
+New-NetNat –Name LocalNAT –InternalIPInterfaceAddressPrefix '192.168.100.0/24'
 ```
 
 Next, assign an IP address to the net adapter:
 ```powershell
-Get-NetAdapter "vEthernet (VmNat)" | New-NetIPAddress -IPAddress 192.168.100.1 -AddressFamily IPv4 -PrefixLength 24
+Get-NetAdapter 'vEthernet (VmNat)' | New-NetIPAddress -IPAddress 192.168.100.1 -AddressFamily IPv4 -PrefixLength 24
 ```
 
-Each nested virtual machine must have an IP address and gateway assigned to it. Note that the gateway IP must point to the NAT adapter from the previous step. 
-You may also want to assign a DNS server:
+Each nested virtual machine must have an IP address and gateway assigned to it. Note that the gateway IP must point to the NAT adapter from the previous step.
 ```powershell
-Get-NetAdapter "vEthernet (VmNat)" | New-NetIPAddress -IPAddress 192.168.100.2 -DefaultGateway 192.168.100.1 -AddressFamily IPv4 -PrefixLength 24
-Netsh interface ip add dnsserver “vEthernet (VmNat)” address=<my DNS server>
+Get-NetAdapter 'vEthernet (VmNat)' | New-NetIPAddress -IPAddress 192.168.100.2 -DefaultGateway 192.168.100.1 -AddressFamily IPv4 -PrefixLength 24
+```
+
+You may also want to assign a DNS server:
+```cmd
+Netsh interface ip add dnsserver "vEthernet (VmNat)" address=<my DNS server>
 ```
 
 ## How nested virtualization works <a id="how-nested-virtualization-works"></a>
@@ -102,13 +105,11 @@ Nested virtualization makes this hardware support available to guest virtual mac
 The diagram below shows Hyper-V without nesting. The Hyper-V hypervisor takes full control of the hardware virtualization capabilities (orange arrow), and 
 does not expose them to the guest operating system.  
 
-img1
 ![Nested Virtualization Disabled](../../img/withoutnestedvirtualization.png "Nested Virtualization Disabled")
 
 In contrast, the diagram below shows Hyper-V with nested virtualization enabled. In this case, Hyper-V exposes the hardware virtualization extensions to its 
 virtual machines. With nesting enabled, a guest virtual machine can install its own hypervisor and run its own guest VMs.  
 
-img2
 ![Nested Virtualization Enabled](../../img/withnestedvirtualization.png "Ubuntu Enabled")
 
 ## 3rd Party Virtualization Apps <a id="3rd-party-virtualization-apps"></a>
