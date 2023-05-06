@@ -30,7 +30,7 @@ Nested virtualization is a feature that allows you to run Hyper-V inside of a Hy
 - The Hyper-V host must be Windows Server 2022/Windows 11 or greater
 - VM configuration version 10.0 or greater
 
-> :warning: **Caution:** The guest can be any Windows supported guest operating system. Newer Windows operating systems may support enlightenments that improve performance.
+> :warning: **Note:** The guest can be any Windows supported guest operating system. Newer Windows operating systems may support enlightenments that improve performance.
 
 ## Configure Nested Virtualization <a id="configure-nested-virtualization"></a>
 1. Create a virtual machine. See the prerequisites above for the required OS and VM versions.
