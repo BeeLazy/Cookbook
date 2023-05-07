@@ -23,20 +23,31 @@ possible, I will do it in a Multipass VM.
 1. [About](#about)
 2. [Description](#description)
 3. [Table of contents](#table-of-contents)
-4. [Update Ubuntu host](#update-ubuntu-host)
 5. [Create the test environment](#create-the-test-environment)
     1. [Stopping Multipass instance](#stopping-multipass-instance)
     2. [Resuming Multipass instance](#resuming-multipass-instance)
-6. [Prepare MicroK8s cloud](#prepare-microk8s-cloud)
-    1. [About](#about)
-7. [Prepare Charmed Kubernetes cloud](#prepare-charmed-kubernetes-cloud)
-1. [About](#about)
-1. [About](#about)
-1. [About](#about)
-1. [About](#about)
-1. [About](#about)
-6. [Cleanup](#cleanup)
-7. [Related links](#related-links)
+6. [Update Ubuntu host](#update-ubuntu-host)
+7. [Prepare MicroK8s cloud](#prepare-microk8s-cloud)
+    1. [Install Juju](#install-juju)
+	2. [Register cloud with Juju](#register-cloud-with-juju)
+	3. [Bootstrap controller](#bootstrap-controller)
+	4. [Deploy ArgoCD](#deploy-argocd)
+	5. [Connect to ArgoCD web](#connect-to-argocd-web)
+	6. [Create App Via CLI](#create-app-via-cli)
+	7. [Clustering MicroK8s cloud](#clustering-microk8s-cloud)
+	8. [Cleanup MicroK8s cloud](#cleanup-microk8s-cloud)
+8. [Prepare Charmed Kubernetes cloud](#prepare-charmed-kubernetes-cloud)
+	1. [Install LXD](#install-lxd)
+	2. [Install kubectl](#install-kubectl)
+	3. [Install Juju](#install-juju-lxd)
+	4. [Init and setup LXD](#init-and-setup-lxd)
+	5. [Bootstrap it](#bootstrap-it)
+	6. [Add model](#add-model)
+	7. [Create overlay bundle](#create-overlay-bundle)
+	8. [Edit LXC profile](#edit-lxc-profile)
+	9. [Deploy Charmed Kubernetes](#deploy-charmed-kubernetes)
+	10. [Cleanup Charmed Kubernetes](#cleanup-charmed-kubernetes)
+9. [Related links](#related-links)
 
 ## Create the test environment <a id="create-the-test-environment"></a>
 Open a terminal and use Multipass to launch an Ubuntu virtual machine and open a shell in it, as shown below. I've called mine **beecube**.
@@ -364,8 +375,8 @@ Checking out the Argo Dashboard now:
 
 ![ArgoCD Dashboard Out of sync 2](../../img/multipass-argocdoutofsync2.png "ArgoCD Dashboard Out of sync 2")
 
-We now have our nginx server, but YIKES, it's out of sync. That's because we dont have set up automatic syncing. 
-Press the **Sync** button to sync it with the git repository,  
+We now have our nginx server, but YIKES, it's out of sync. That's because no automatic syncing is configured. 
+Press the **Sync** button to sync it with the git repository.  
 
 ![ArgoCD Dashboard Syncing](../../img/multipass-argocdsyncing.png "ArgoCD Dashboard Syncing")
 
@@ -373,11 +384,12 @@ Press the **Sync** button to sync it with the git repository,
 
 ### Clustering MicroK8s cloud <a id="clustering-microk8s-cloud"></a>
 We could have continued building on this, by adding more nodes with Multipass. Then installing MicroK8s on them and making a HA cluster. 
-You can see how to do that in [this guide](MicroK8s-HowtoSetupMultinodeHighAvailabilityCluster.md). We will stop with MicroK8s here, 
-tear it all down, and instead make a **Charmed Kubernetes** HA cluster on top of LXD.
+You can see how to do that in [this guide](MicroK8s-HowtoSetupMultinodeHighAvailabilityCluster.md).  
+
+We will stop with MicroK8s here, tear it all down, and instead make a **Charmed Kubernetes** HA cluster on top of LXD. 
 
 ### Cleanup MicroK8s cloud <a id="cleanup-microk8s-cloud"></a>
-First we need to list and remove resources made in this MicroK8s demo. On the Multipass host remove Multipass VM:
+First we need to list and remove resources made in this MicroK8s demo. On the Multipass host remove the Multipass VM:
 ```console
 bee@multipassus:~$ multipass list
 Name                    State             IPv4             Image
@@ -475,6 +487,11 @@ For the LXD 5.0 LTS release, use:
 sudo snap install lxd --channel=5.0/stable
 ```
 
+### Install kubectl <a id="install-kubectl"></a>
+```console
+sudo snap install kubectl --classic
+```
+
 ### Install Juju <a id="install-juju-lxd"></a>
 We will now install the Juju CLI client via **snap**:
 ```console
@@ -484,7 +501,7 @@ juju (2.9/stable) 2.9.42 from Canonical✓ installed
 
 ### Init and setup LXD <a id="init-and-setup-lxd"></a>
 ```console
-ubuntu@beecube:~$ lxd init
+ubuntu@beecube:~$ sudo lxd init
 Would you like to use LXD clustering? (yes/no) [default=no]:
 Do you want to configure a new storage pool? (yes/no) [default=yes]:
 Name of the new storage pool [default=default]:
@@ -529,6 +546,23 @@ ubuntu@beecube:~$ juju add-model cdk-127
 Added 'cdk-127' model on localhost/localhost with credential 'localhost' for user 'admin'
 ```
 
+### Create overlay bundle <a id="create-overlay-bundle"></a>
+```console
+# Source: https://raw.githubusercontent.com/charmed-kubernetes/bundle/main/fragments/k8s/cdk/bundle.yaml
+cat << EOF > bundle.yaml
+description: A highly-available, production-grade Kubernetes cluster.
+series: jammy
+applications:
+  "kubernetes-control-plane":
+    constraints: "cores=1 mem=3G root-disk=16G"
+  "kubernetes-worker":
+    constraints: "cores=2 mem=6G root-disk=16G"
+    num_units: 2
+  "etcd":
+    constraints: "cores=1 mem=4G root-disk=16G"
+EOF
+```
+
 ### Edit LXC profile <a id="edit-lxc-profile"></a>
 ```console
 lxc profile edit juju-cdk-127
@@ -557,12 +591,12 @@ devices:
     source: /dev/null
     type: disk
 name: juju-cdk-127
-used_by:[]
+used_by: []
 ```
 
 ### Deploy Charmed Kubernetes <a id="deploy-charmed-kubernetes"></a>
 ```console
-ubuntu@beecube:~$ juju deploy charmed-kubernetes
+ubuntu@beecube:~$ juju deploy charmed-kubernetes --overlay bundle.yaml
 Located bundle "charmed-kubernetes" in charm-hub, revision 1217
 Located charm "calico" in charm-hub, channel stable
 Located charm "containerd" in charm-hub, channel stable
