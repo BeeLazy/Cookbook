@@ -15,9 +15,9 @@ uvt-kvm create cdk-vm --cpu 6 --memory 10240 --disk 50
 ssh ubuntu@<ip>
 ```
 
-On many OSes you could skip the VM altogether, and just start with installing Juju and LXD directly on the laptop. Cleaning up after it is easy. 
-Destroying the model will remove all applications and LXC containers created. That is up to you. To make this guide as general as possible, I will 
-do it in a Multipass VM.
+On many OSes you could skip the VM altogether, and just start with installing **Juju** and **LXD** directly on the laptop. Cleaning up after 
+it is easy. Destroying the model will remove all applications and LXC containers created. That is up to you. To make this guide as general as 
+possible, I will do it in a Multipass VM.  
 
 ## Table of contents <a id="table-of-contents"></a>
 1. [About](#about)
@@ -154,7 +154,7 @@ beecube   Ready    <none>   36m   v1.27.0
 ```
 
 ### Bootstrap controller <a id="bootstrap-controller"></a>
-This is all great. But an empty cloud can't be used for much. We will deploy ArgoCD to help us with that. 
+This is all great. But an empty cloud can't be used for much. We will deploy **ArgoCD** to help us with that. 
 But first we need to bootstrap a controller. I will name mine **hive-controller**.
 ```console
 ubuntu@beecube:~$ juju bootstrap microk8s hive-controller
@@ -288,7 +288,7 @@ YH8eF6aSkvfVYJRs
 ```
 
 Argo is currently only available on the Kubernetes cluster network. To be able to connect to it, we will have to make the port available outside Kubernetes. 
-This is normally done with a proxy like Ingress or setting the service type to LoadBalancer. For this quick test, we will only forward the port temporarily 
+This is normally done with a proxy like **Ingress** or setting the service type to **LoadBalancer**. For this quick test, we will only forward the port temporarily 
 with **kubectl port-forward**:
 ```console
 microk8s.kubectl port-forward --address 0.0.0.0 svc/argocd-server -n argocd 6443:443
@@ -318,28 +318,32 @@ bee@multipassus:~$ sudo iptables -t nat -I PREROUTING 1 -i eth0 -p tcp --dport 6
 bee@multipassus:~$ sudo iptables -I FORWARD 1 -p tcp -d 10.95.75.112 --dport 6443 -j ACCEPT
 ```
 
-
-We should now have everything we need to connect to ArgoCD. Open a browser https://<IP of Multipass host>:6443
+We should now have everything we need to connect to ArgoCD at https://IPofMultipassHost:6443
 
 Then use a browser to connect to the site: 
 
 ![ArgoCD Login](../../img/multipass-argocdlogin.png "ArgoCD Login")
 
+The username is **admin** and we found the password a bit earlier with **kubectl get secret** 
+
 ![ArgoCD Dashboard](../../img/multipass-argocddashboard.png "ArgoCD Dashboard")
 
 
 ### Create App Via CLI <a id="create-app-via-cli"></a>
-Beautifull. But very empty.... let's deploy something to our cloud. First we need to set the current namespace to argocd running the following command:
+Beautifull. But very empty.... let's deploy something to our cloud. First we need to set the current namespace to **argocd** by running the following command:
 ```console
-kubectl config set-context --current --namespace=argocd
+ubuntu@beecube:~$ microk8s.kubectl config set-context --current --namespace=argocd
 ```
 
-Create the example nginx application with the following command:
+We now need to create an application so Argo has something to keep track of. We could have done that in the webinterface, but let's download the CLI and use 
+that to create an example nginx application with the following commands:
 ```console
+# Get argocd command
 ubuntu@beecube:~$ sudo curl -sSL -o argocd-linux-amd64 https://github.com/argoproj/argo-cd/releases/latest/download/argocd-linux-amd64
 ubuntu@beecube:~$ sudo install -m 555 argocd-linux-amd64 /usr/local/bin/argocd
 ubuntu@beecube:~$ rm argocd-linux-amd64
 
+# Get password for admin, and use that to login argocd
 ubuntu@beecube:~$ microk8s.kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d; echo
 YH8eF6aSkvfVYJRs
 ubuntu@beecube:~$ argocd login localhost:6443
@@ -349,15 +353,19 @@ Password:
 'admin:login' logged in successfully
 Context 'localhost:6443' updated
 
+# Create application with argocd CLI
 ubuntu@beecube:~$ argocd app create my-nginx --repo https://github.com/BeeLazy/Cookbook.git --path k8s/examples/argocd-nginx --dest-server https://kubernetes.default.svc --dest-namespace default
 application 'my-nginx' created
 ```
 
-Checking out Argo Dashboard now: 
+Checking out the Argo Dashboard now: 
 
 ![ArgoCD Dashboard Out of sync 1](../../img/multipass-argocdoutofsync1.png "ArgoCD Dashboard Out of sync 1")
 
 ![ArgoCD Dashboard Out of sync 2](../../img/multipass-argocdoutofsync2.png "ArgoCD Dashboard Out of sync 2")
+
+We now have our nginx server, but YIKES, it's out of sync. That's because we dont have set up automatic syncing. 
+Press the **Sync** button to sync it with the git repository,  
 
 ![ArgoCD Dashboard Syncing](../../img/multipass-argocdsyncing.png "ArgoCD Dashboard Syncing")
 
@@ -366,7 +374,7 @@ Checking out Argo Dashboard now:
 ### Clustering MicroK8s cloud <a id="clustering-microk8s-cloud"></a>
 We could have continued building on this, by adding more nodes with Multipass. Then installing MicroK8s on them and making a HA cluster. 
 You can see how to do that in [this guide](MicroK8s-HowtoSetupMultinodeHighAvailabilityCluster.md). We will stop with MicroK8s here, 
-tear it all down, and instead make a Charmed Kubernetes HA cluster on top of LXD.
+tear it all down, and instead make a **Charmed Kubernetes** HA cluster on top of LXD.
 
 ### Cleanup MicroK8s cloud <a id="cleanup-microk8s-cloud"></a>
 First we need to list and remove resources made in this MicroK8s demo. On the Multipass host remove Multipass VM:
@@ -381,7 +389,7 @@ bee@multipassus:~$ multipass list
 No instances found.
 ```
 
-Then remove the temporary routing we make to access Argo from outside the host:
+Then remove the temporary routing we made to access Argo from outside the host:
 ```console
 bee@multipassus:~$ sudo iptables -L -n -t nat --line-number
 # Warning: iptables-legacy tables present, use iptables-legacy to see them
