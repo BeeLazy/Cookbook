@@ -1,10 +1,10 @@
-# Multipass: How-to run a Kubernetes Cloud on a Laptop
+# Multipass: How-to setup ArgoCD in MicroK8s on a Laptop
 
 ## About <a id="about"></a>
 This document describes how to deploy a full Kubernetes Cloud to your laptop with **Juju**. 
 
 ## Description <a id="description"></a>
-First we will deploy **ArgoCD** on **MicroK8s**, and after tearing that down we will deploy **Charmed Kubernetes** on a **LXD** cloud. 
+We will use **Juju** to deploy a **MicroK8s** cloud. And then we will deploy **ArgoCD**, and configure it to deploy services from a **gitrepo**. 
 All on a laptop.  
 
 We will use Multipass to create a VM to run all this in, but you could use any other hypervisor if you like. You can find Multipass 
@@ -15,9 +15,8 @@ uvt-kvm create cdk-vm --cpu 6 --memory 10240 --disk 50
 ssh ubuntu@<ip>
 ```
 
-On many OSes you could skip the VM altogether, and just start with installing **Juju** and **LXD** directly on the laptop. Cleaning up after 
-it is easy. Destroying the model will remove all applications and LXC containers created. That is up to you. To make this guide as general as 
-possible, I will do it in a Multipass VM.  
+On many OSes you could skip the VM altogether, and just start with installing **Juju** directly on the laptop. That is up to you. 
+To make this guide as general as possible, I will do it in a **Multipass** VM.  
 
 ## Table of contents <a id="table-of-contents"></a>
 1. [About](#about)
@@ -36,18 +35,7 @@ possible, I will do it in a Multipass VM.
 	6. [Create App Via CLI](#create-app-via-cli)
 	7. [Clustering MicroK8s cloud](#clustering-microk8s-cloud)
 	8. [Cleanup MicroK8s cloud](#cleanup-microk8s-cloud)
-8. [Prepare Charmed Kubernetes cloud](#prepare-charmed-kubernetes-cloud)
-	1. [Install LXD](#install-lxd)
-	2. [Install kubectl](#install-kubectl)
-	3. [Install Juju](#install-juju-lxd)
-	4. [Init and setup LXD](#init-and-setup-lxd)
-	5. [Bootstrap it](#bootstrap-it)
-	6. [Add model](#add-model)
-	7. [Create overlay bundle](#create-overlay-bundle)
-	8. [Edit LXC profile](#edit-lxc-profile)
-	9. [Deploy Charmed Kubernetes](#deploy-charmed-kubernetes)
-	10. [Cleanup Charmed Kubernetes](#cleanup-charmed-kubernetes)
-9. [Related links](#related-links)
+8. [Related links](#related-links)
 
 ## Create the test environment <a id="create-the-test-environment"></a>
 Open a terminal and use Multipass to launch an Ubuntu virtual machine and open a shell in it, as shown below. I've called mine **beecube**.
@@ -383,13 +371,13 @@ Press the **Sync** button to sync it with the git repository.
 ![ArgoCD Dashboard Synced](../../img/multipass-argocdsynced.png "ArgoCD Dashboard Synced")
 
 ### Clustering MicroK8s cloud <a id="clustering-microk8s-cloud"></a>
-We could have continued building on this, by adding more nodes with Multipass. Then installing MicroK8s on them and making a HA cluster. 
+We could have continued building on this setup, by adding more nodes with Multipass. Then installing MicroK8s on them and making a HA cluster. 
 You can see how to do that in [this guide](MicroK8s-HowtoSetupMultinodeHighAvailabilityCluster.md).  
 
-We will stop with MicroK8s here, tear it all down, and instead make a **Charmed Kubernetes** HA cluster on top of LXD. 
+What you do next with your K8s cluster is up to you. Happy labbing. 
 
 ### Cleanup MicroK8s cloud <a id="cleanup-microk8s-cloud"></a>
-First we need to list and remove resources made in this MicroK8s demo. On the Multipass host remove the Multipass VM:
+To list and remove resources made in this MicroK8s demo. On the Multipass host remove the Multipass VM:
 ```console
 bee@multipassus:~$ multipass list
 Name                    State             IPv4             Image
@@ -449,231 +437,6 @@ num  target     prot opt source               destination
 bee@multipassus:~$ sudo iptables -D FORWARD 1
 ```
 
-## Prepare Charmed Kubernetes cloud <a id="prepare-charmed-kubernetes-cloud"></a>
-Now that we're basically back where we started. It's ready to install Charmed Kubernetes on LXD.  
-
-Start with making a Multipass VM and updating it:
-```console
-bee@multipassus:~$ multipass launch -n beecube -m 10g -c 6 -d 50G jammy
-Launched: beecube
-
-bee@multipassus:~$ multipass shell beecube
-Welcome to Ubuntu 22.04.2 LTS (GNU/Linux 5.15.0-71-generic x86_64)
-
-ubuntu@beecube:~$ sudo apt-get update && sudo apt-get dist-upgrade && sudo snap refresh
-2023-05-07T04:50:45Z INFO Waiting for automatic snapd restart...
-core20 20230404 from Canonical✓ refreshed
-snapd 2.59.2 from Canonical✓ refreshed
-```
-
-### Install LXD <a id="install-lxd"></a>
-LXD can be installed via snap.  
-If you dont have snap command, see [Installing snapd](https://snapcraft.io/docs/installing-snapd)  
-
-LXD is pre-installed on Ubuntu Server. We will update the LXD to the latest stable release:
-```console
-ubuntu@beecube:~$ sudo snap remove --purge lxd && sudo snap install lxd
-lxd removed
-lxd 5.13-cea5ee2 from Canonical✓ installed
-```
-
-On other systems, the lxd package can be installed using:
-```console
-sudo snap install lxd
-```
-
-For the LXD 5.0 LTS release, use:
-```console
-sudo snap install lxd --channel=5.0/stable
-```
-
-### Install kubectl <a id="install-kubectl"></a>
-```console
-sudo snap install kubectl --classic
-```
-
-### Install Juju <a id="install-juju-lxd"></a>
-We will now install the Juju CLI client via **snap**:
-```console
-ubuntu@beecube:~$ sudo snap install juju --classic
-juju (2.9/stable) 2.9.42 from Canonical✓ installed
-```
-
-### Init and setup LXD <a id="init-and-setup-lxd"></a>
-```console
-ubuntu@beecube:~$ sudo lxd init
-Would you like to use LXD clustering? (yes/no) [default=no]:
-Do you want to configure a new storage pool? (yes/no) [default=yes]:
-Name of the new storage pool [default=default]:
-Name of the storage backend to use (dir, lvm, zfs, btrfs, ceph) [default=zfs]: dir
-Would you like to connect to a MAAS server? (yes/no) [default=no]:
-Would you like to create a new local network bridge? (yes/no) [default=yes]:
-What should the new bridge be called? [default=lxdbr0]:
-What IPv4 address should be used? (CIDR subnet notation, “auto” or “none”) [default=auto]:
-What IPv6 address should be used? (CIDR subnet notation, “auto” or “none”) [default=auto]: none
-Would you like the LXD server to be available over the network? (yes/no) [default=no]:
-Would you like stale cached images to be updated automatically? (yes/no) [default=yes]:
-Would you like a YAML "lxd init" preseed to be printed? (yes/no) [default=no]:
-```
-
-### Bootstrap it <a id="bootstrap-it"></a>
-```console
-ubuntu@beecube:~$ juju bootstrap localhost
-Creating Juju controller "localhost-localhost" on localhost/localhost
-Looking for packaged Juju agent version 2.9.42 for amd64
-Located Juju agent version 2.9.42-ubuntu-amd64 at https://streams.canonical.com/juju/tools/agent/2.9.42/juju-2.9.42-linux-amd64.tgz
-To configure your system to better support LXD containers, please see: https://linuxcontainers.org/lxd/docs/master/explanation/performance_tuning/
-Launching controller instance(s) on localhost/localhost...
- - juju-3f558b-0 (arch=amd64)
-Installing Juju agent on bootstrap instance
-Fetching Juju Dashboard 0.8.1
-Waiting for address
-Attempting to connect to 10.9.71.106:22
-Connected to 10.9.71.106
-Running machine configuration script...
-Bootstrap agent now started
-Contacting Juju controller at 10.9.71.106 to verify accessibility...
-
-Bootstrap complete, controller "localhost-localhost" is now available
-Controller machines are in the "controller" model
-Initial model "default" added
-```
-
-### Add model <a id="add-model"></a>
-Adding a model helps keep things clean and organized
-```console
-ubuntu@beecube:~$ juju add-model cdk-127
-Added 'cdk-127' model on localhost/localhost with credential 'localhost' for user 'admin'
-```
-
-### Create overlay bundle <a id="create-overlay-bundle"></a>
-```console
-# Source: https://raw.githubusercontent.com/charmed-kubernetes/bundle/main/fragments/k8s/cdk/bundle.yaml
-cat << EOF > bundle.yaml
-description: A highly-available, production-grade Kubernetes cluster.
-series: jammy
-applications:
-  "kubernetes-control-plane":
-    constraints: "cores=1 mem=3G root-disk=16G"
-  "kubernetes-worker":
-    constraints: "cores=2 mem=6G root-disk=16G"
-    num_units: 2
-  "etcd":
-    constraints: "cores=1 mem=4G root-disk=16G"
-EOF
-```
-
-### Edit LXC profile <a id="edit-lxc-profile"></a>
-```console
-lxc profile edit juju-cdk-127
-```
-
-Replace it with:
-```console
-config:
-  boot.autostart: "true"
-  linux.kernel_modules: ip_tables,ip6_tables,netlink_diag,nf_nat,overlay
-  raw.lxc: |
-    lxc.apparmor.profile=unconfined
-    lxc.mount.auto=proc:rw sys:rw cgroup:rw
-    lxc.cgroup.devices.allow=a
-    lxc.cap.drop=
-  security.nesting: "true"
-  security.privileged: "true"
-description: ""
-devices:
-  aadisable:
-    path: /sys/module/nf_conntrack/parameters/hashsize
-    source: /dev/null
-    type: disk
-  aadisable1:
-    path: /sys/module/apparmor/parameters/enabled
-    source: /dev/null
-    type: disk
-name: juju-cdk-127
-used_by: []
-```
-
-### Deploy Charmed Kubernetes <a id="deploy-charmed-kubernetes"></a>
-```console
-ubuntu@beecube:~$ juju deploy charmed-kubernetes --overlay bundle.yaml
-Located bundle "charmed-kubernetes" in charm-hub, revision 1217
-Located charm "calico" in charm-hub, channel stable
-Located charm "containerd" in charm-hub, channel stable
-<snipp>
-- add unit kubernetes-worker/2 to new machine 9
-Deploy of bundle completed.
-```
-
-This will take a while depending on hardware resources allocated. You can check status with **juju status**:
-```console
-ubuntu@beecube:~$ juju status
-Model    Controller           Cloud/Region         Version  SLA          Timestamp
-cdk-127  localhost-localhost  localhost/localhost  2.9.42   unsupported  05:54:28Z
-
-App                       Version  Status   Scale  Charm                     Channel  Rev  Exposed  Message
-calico                             unknown      0  calico                    stable    82  no
-containerd                         unknown      0  containerd                stable    58  no
-easyrsa                            waiting    0/1  easyrsa                   stable    39  no       waiting for machine
-etcd                               waiting    0/3  etcd                      stable   736  no       waiting for machine
-kubeapi-load-balancer              waiting    0/1  kubeapi-load-balancer     stable    66  yes      waiting for machine
-kubernetes-control-plane           waiting    0/2  kubernetes-control-plane  stable   260  no       waiting for machine
-kubernetes-worker                  waiting    0/3  kubernetes-worker         stable   106  yes      waiting for machine
-
-Unit                        Workload  Agent       Machine  Public address  Ports  Message
-easyrsa/0                   waiting   allocating  0        10.9.71.55             waiting for machine
-etcd/0                      waiting   allocating  1                               waiting for machine
-etcd/1                      waiting   allocating  2                               waiting for machine
-etcd/2                      waiting   allocating  3                               waiting for machine
-kubeapi-load-balancer/0     waiting   allocating  4                               waiting for machine
-kubernetes-control-plane/0  waiting   allocating  5                               waiting for machine
-kubernetes-control-plane/1  waiting   allocating  6                               waiting for machine
-kubernetes-worker/0         waiting   allocating  7                               waiting for machine
-kubernetes-worker/1         waiting   allocating  8                               waiting for machine
-kubernetes-worker/2         waiting   allocating  9                               waiting for machine
-
-Machine  State    Address     Inst id        Series  AZ  Message
-0        pending  10.9.71.55  juju-5b60db-0  jammy       Running
-1        down                 pending        jammy       Creating container
-2        down                 pending        jammy       Creating container
-3        down                 pending        jammy       Creating container
-4        down                 pending        jammy       Creating container
-5        down                 pending        jammy       Creating container
-6        down                 pending        jammy       Creating container
-7        down                 pending        jammy       Creating container
-8        down                 pending        jammy       Creating container
-9        down                 pending        jammy       Creating container
-```
-
-Yeah, it's going to take a while:
-```console
-top - 06:08:40 up 15:29,  3 users,  load average: 3.05, 2.08, 1.79
-Tasks: 168 total,   1 running, 167 sleeping,   0 stopped,   0 zombie
-%Cpu(s): 74.1 us,  1.4 sy,  0.0 ni, 23.5 id,  1.0 wa,  0.0 hi,  0.0 si,  0.0 st
-MiB Mem :  16000.6 total,    150.3 free,  10502.7 used,   5347.6 buff/cache
-MiB Swap:   4096.0 total,   3838.8 free,    257.2 used.   5160.1 avail Mem
-
-    PID USER      PR  NI    VIRT    RES    SHR S  %CPU  %MEM     TIME+ COMMAND
-  20159 root      20   0   14.5g   9.9g   8684 S 603.0  63.4  64:41.35 qemu-system-x86
-    381 root      20   0       0      0      0 S   0.3   0.0   0:22.46 jbd2/dm-0-8
-  20416 bee       20   0   10488   3812   3212 R   0.3   0.0   0:00.79 top
-      1 root      20   0  167772  11436   6580 S   0.0   0.1   0:13.37 systemd
-```
-
-Let's hope this ends better than when we tested if it could run Crysis:
-
-![Does it run Kubernetes](../../img/doesitrunkubernetes.png "Does it run Kubernetes")
-
-Now you (should) have a good **Kubernetes Cluster**, a **LXD cloud** and **Multipass** to play with. Happy labbing.  
-
-### Cleanup Charmed Kubernetes <a id="cleanup-charmed-kubernetes"></a>
-If you want to make a new lab, there is no need to tear down the entire Multipass VM like we did with MicroK8s. 
-Destroying the model is enough to remove all applications and LXC containers created:
-```console
-juju destroy-model cdk-127
-```
-
 ## Related links <a id="related-links"></a>
 [Getting started with Juju - juju.is](https://juju.is/docs/olm/get-started-with-juju)  
-[Charmed Juju - askubuntu.com](https://askubuntu.com/questions/1147622/juju-charmed-kubernetes-what-are-minimal-hardware-requirements)  
 [Installing snapd - snapcraft.io](https://snapcraft.io/docs/installing-snapd)  
