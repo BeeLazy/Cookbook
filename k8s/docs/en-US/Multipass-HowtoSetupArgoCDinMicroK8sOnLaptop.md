@@ -469,9 +469,11 @@ multipass launch --cloud-init MicroK8s-ArgoCD-2.7.1.yaml `
 --disk 50G
 ```
 
-You should now be able to ssh into it with **multipass shell argolab271**. That we can create a ready to go Kubernetes cluster with Argo or whatever 
-we want on top, with just one command, is what makes **cloud-init** and **multipass** so powerfull tools. In fact, if we wanted a **LXD** local cloud 
-too, all we need to do is add **lxd init --auto** and **juju bootstrap localhost lxd** to our installscript, and we would have that too. 
+You should now be able to ssh into it with **multipass shell argolab271**  
+
+The fact that we can create a ready to go Kubernetes cluster with Argo or whatever we want on top, with just a few lines of text and one command, is what 
+makes **cloud-init** and **multipass** so powerfull tools. In fact, if we wanted a **LXD** local cloud too, all we need to do is add **lxd init --auto** 
+and **juju bootstrap localhost lxd** to our installscript, and we would have that too!  
 
 ## Related links <a id="related-links"></a>
 [Getting started with Juju - juju.is](https://juju.is/docs/olm/get-started-with-juju)  
