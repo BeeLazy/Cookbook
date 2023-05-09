@@ -293,9 +293,12 @@ with **kubectl port-forward**:
 microk8s.kubectl port-forward --address 0.0.0.0 svc/argocd-server -n argocd 6443:443
 ```
 
-This should make the **argocd-server** service availiable to the Multipass host on port 6443. **However** we want it accessible from our physical host, and the 
-rest of our network too. So we'll will have to route traffic on this port from the Multipass host (the laptop) to the Multipass VM (it's inside that we're running 
-our Kubernetes cluster). On the Multipass host, start with finding the IP of the Multipass VM:
+This should make the **argocd-server** service availiable to the Multipass host on port *6443*. The multipass host in this case is our laptop. If you have a GUI and 
+a browser you can connect to ArgoCD web at https://127.0.0.1:6443   
+
+**However** if we want it accessible from the rest of our network, or if we happen to run Multipass in a VM and not on our laptop, then we'll will have to route 
+traffic on this port from the Multipass host (the laptop) to the Multipass VM (it's inside that we're running our Kubernetes cluster). On the Multipass host, 
+start with finding the IP of the Multipass VM:
 ```console
 bee@multipassus:~$ multipass info beecube
 Name:           beecube
