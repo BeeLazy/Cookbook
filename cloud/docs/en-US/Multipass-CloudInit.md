@@ -1,3 +1,11 @@
+multipass launch --cloud-init MicroK8s-ArgoCD-2.7.1.yaml \
+--timeout 1200 \
+--name argolab271 \
+--memory 12G \
+--cpus 6 \
+--disk 50G
+
+```console
 package_update: true
 package_upgrade: true
 
@@ -82,3 +90,9 @@ runcmd:
   microk8s.kubectl rollout status service/argocd-server -n argocd -w --timeout=600s
 
 final_message: "The system is finally up, after $UPTIME seconds"
+```
+
+https://github.com/apeskalle/charm-dev-utils
+https://technekey.com/using-cloud-init-to-bootstrap-a-virtual-machine/
+https://cloudinit.readthedocs.io/en/latest/reference/examples.html
+https://github.com/canonical/cloud-init

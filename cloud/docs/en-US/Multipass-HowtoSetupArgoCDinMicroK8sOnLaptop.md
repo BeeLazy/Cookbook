@@ -357,7 +357,7 @@ Password:
 Context 'localhost:6443' updated
 
 # Create application with argocd CLI
-ubuntu@beecube:~$ argocd app create my-nginx --repo https://github.com/BeeLazy/Cookbook.git --path k8s/examples/argocd-nginx --dest-server https://kubernetes.default.svc --dest-namespace default
+ubuntu@beecube:~$ argocd app create my-nginx --repo https://github.com/BeeLazy/Cookbook.git --path cloud/examples/argocd-nginx --dest-server https://kubernetes.default.svc --dest-namespace default
 application 'my-nginx' created
 ```
 
@@ -447,7 +447,7 @@ up to, and including, installing ArgoCD. It uses the [cloud-init](https://github
 
 Automatic installation on Linux:
 ```console
-wget https://raw.githubusercontent.com/BeeLazy/Cookbook/main/k8s/cloud-init/MicroK8s-ArgoCD-2.7.1.yaml
+wget https://raw.githubusercontent.com/BeeLazy/Cookbook/main/cloud/cloud-init/MicroK8s-ArgoCD-2.7.1.yaml
 
 multipass launch --cloud-init MicroK8s-ArgoCD-2.7.1.yaml \
 --timeout 1200 \
@@ -459,7 +459,7 @@ multipass launch --cloud-init MicroK8s-ArgoCD-2.7.1.yaml \
 
 Automatic installation on Windows:
 ```powershell
-Invoke-WebRequest -Uri 'https://raw.githubusercontent.com/BeeLazy/Cookbook/main/k8s/cloud-init/MicroK8s-ArgoCD-2.7.1.yaml' -OutFile 'MicroK8s-ArgoCD-2.7.1.yaml'
+Invoke-WebRequest -Uri 'https://raw.githubusercontent.com/BeeLazy/Cookbook/main/cloud/cloud-init/MicroK8s-ArgoCD-2.7.1.yaml' -OutFile 'MicroK8s-ArgoCD-2.7.1.yaml'
 
 multipass launch --cloud-init MicroK8s-ArgoCD-2.7.1.yaml `
 --timeout 1200 `
