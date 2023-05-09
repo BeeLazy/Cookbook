@@ -4,10 +4,10 @@
 This document describes how to deploy a full Kubernetes Cloud to your laptop with **Juju**. 
 
 ## Description <a id="description"></a>
-We will use **Juju** to deploy a **MicroK8s** cloud. And then we will deploy **ArgoCD**, and configure it to deploy services from a **gitrepo**. 
+We will use **snap** to deploy a **MicroK8s** cloud. And then we will deploy **ArgoCD**, and configure it to deploy services from a **gitrepo**. 
 All on a laptop.  
 
-We will use Multipass to create a VM to run all this in, but you could use any other hypervisor if you like. You can find Multipass 
+We will use **Multipass** to create a VM to run all this in, but you could use any other hypervisor if you like. You can find Multipass 
 install instructions [here](Multipass-HowtoInstall.md). The important thing is that you get a Ubuntu host where we can run this. 
 Like if you have KVM, you could get a VM and ssh into it like this:
 ```console
