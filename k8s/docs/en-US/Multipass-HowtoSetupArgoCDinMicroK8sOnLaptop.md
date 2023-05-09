@@ -35,7 +35,8 @@ To make this guide as general as possible, I will do it in a **Multipass** VM.
 	6. [Create App Via CLI](#create-app-via-cli)
 	7. [Clustering MicroK8s cloud](#clustering-microk8s-cloud)
 	8. [Cleanup MicroK8s cloud](#cleanup-microk8s-cloud)
-8. [Related links](#related-links)
+8. [Automatic installation](#automatic-installation)
+9. [Related links](#related-links)
 
 ## Create the test environment <a id="create-the-test-environment"></a>
 Open a terminal and use Multipass to launch an Ubuntu virtual machine and open a shell in it, as shown below. I've called mine **beecube**.
@@ -439,6 +440,38 @@ num  target     prot opt source               destination
 3    ACCEPT     udp  --  anywhere             anywhere             udp spt:bootps /* generated for Multipass network mpqemubr0 */
 bee@multipassus:~$ sudo iptables -D FORWARD 1
 ```
+
+## Automatic installation <a id="automatic-installation"></a>
+The installation done in this guide can easily be done automatic. The following commands will create the Multipass VM and do all the configuration 
+up to, and including, installing ArgoCD. It uses the [cloud-init](https://github.com/canonical/cloud-init) system to achiev that.  
+
+Automatic installation on Linux:
+```console
+wget https://raw.githubusercontent.com/BeeLazy/Cookbook/main/k8s/cloud-init/MicroK8s-ArgoCD-2.7.1.yaml
+
+multipass launch --cloud-init MicroK8s-ArgoCD-2.7.1.yaml \
+--timeout 1200 \
+--name argolab271 \
+--memory 12G \
+--cpus 6 \
+--disk 50G
+```
+
+Automatic installation on Windows:
+```powershell
+Invoke-WebRequest -Uri 'https://raw.githubusercontent.com/BeeLazy/Cookbook/main/k8s/cloud-init/MicroK8s-ArgoCD-2.7.1.yaml' -OutFile 'MicroK8s-ArgoCD-2.7.1.yaml'
+
+multipass launch --cloud-init MicroK8s-ArgoCD-2.7.1.yaml `
+--timeout 1200 `
+--name argolab271 `
+--memory 12G `
+--cpus 6 `
+--disk 50G
+```
+
+You should now be able to ssh into it with **multipass shell argolab271**. That we can create a ready to go Kubernetes cluster with Argo or whatever 
+we want on top, with just one command, is what makes **cloud-init** and **multipass** so powerfull tools. In fact, if we wanted a **LXD** local cloud 
+too, all we need to do is add **lxd init --auto** and **juju bootstrap localhost lxd** to our installscript, and we would have that too. 
 
 ## Related links <a id="related-links"></a>
 [Getting started with Juju - juju.is](https://juju.is/docs/olm/get-started-with-juju)  
