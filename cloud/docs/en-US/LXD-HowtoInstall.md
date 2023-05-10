@@ -93,10 +93,15 @@ Add the following rules before the COMMIT line.
 -A ufw-before-input -i lxdfan0 -p icmp -m icmp --icmp-type 12 -m comment --comment "generated for LXD network lxdfan0" -j ACCEPT
 -A ufw-before-input -i lxdfan0 -p icmp -m icmp --icmp-type 11 -m comment --comment "generated for LXD network lxdfan0" -j ACCEPT
 -A ufw-before-input -i lxdfan0 -p icmp -m icmp --icmp-type 3 -m comment --comment "generated for LXD network lxdfan0" -j ACCEPT
+-A ufw-before-input -i lxdfan0 -p icmp -m icmp --icmp-type 2 -m comment --comment "generated for LXD network lxdfan0" -j ACCEPT
+-A ufw-before-input -i eth0 -p icmp -m icmp --icmp-type 2 -m comment --comment "generated for LXD network eth0" -j ACCEPT
 -A ufw-before-input -i lxdfan0 -p tcp -m tcp --dport 53 -m comment --comment "generated for LXD network lxdfan0" -j ACCEPT
 -A ufw-before-input -i lxdfan0 -p udp -m udp --dport 53 -m comment --comment "generated for LXD network lxdfan0" -j ACCEPT
 -A ufw-before-input -i lxdfan0 -p udp -m udp --dport 67 -m comment --comment "generated for LXD network lxdfan0" -j ACCEPT
+-A ufw-before-input -i lxdfan0 -p udp -m udp --dport 1053 -m comment --comment "generated for LXD network lxdfan0" -j ACCEPT
+-A ufw-before-input -i lxdfan0 -p tcp -m tcp --dport 8443 -m comment --comment "generated for LXD network lxdfan0" -j ACCEPT
 -A ufw-before-input -i eth0 -p tcp -m tcp --dport 8443 -m comment --comment "generated for LXD network eth0" -j ACCEPT
+-A ufw-before-input -i eth0 -p udp -m udp --dport 8472 -m comment --comment "generated for LXD network eth0" -j ACCEPT
 # Forward
 -A ufw-before-forward -o lxdfan0 -m comment --comment "generated for LXD network lxdfan0" -j ACCEPT
 -A ufw-before-forward -i lxdfan0 -m comment --comment "generated for LXD network lxdfan0" -j ACCEPT
@@ -104,9 +109,15 @@ Add the following rules before the COMMIT line.
 -A ufw-before-output -o lxdfan0 -p icmp -m icmp --icmp-type 12 -m comment --comment "generated for LXD network lxdfan0" -j ACCEPT
 -A ufw-before-output -o lxdfan0 -p icmp -m icmp --icmp-type 11 -m comment --comment "generated for LXD network lxdfan0" -j ACCEPT
 -A ufw-before-output -o lxdfan0 -p icmp -m icmp --icmp-type 3 -m comment --comment "generated for LXD network lxdfan0" -j ACCEPT
+-A ufw-before-output -o lxdfan0 -p icmp -m icmp --icmp-type 2 -m comment --comment "generated for LXD network lxdfan0" -j ACCEPT
+-A ufw-before-output -o eth0 -p icmp -m icmp --icmp-type 12 -m comment --comment "generated for LXD network eth0" -j ACCEPT
+-A ufw-before-output -o eth0 -p icmp -m icmp --icmp-type 11 -m comment --comment "generated for LXD network eth0" -j ACCEPT
+-A ufw-before-output -o eth0 -p icmp -m icmp --icmp-type 3 -m comment --comment "generated for LXD network eth0" -j ACCEPT
+-A ufw-before-output -o eth0 -p icmp -m icmp --icmp-type 2 -m comment --comment "generated for LXD network eth0" -j ACCEPT
 -A ufw-before-output -o lxdfan0 -p tcp -m tcp --sport 53 -m comment --comment "generated for LXD network lxdfan0" -j ACCEPT
 -A ufw-before-output -o lxdfan0 -p udp -m udp --sport 53 -m comment --comment "generated for LXD network lxdfan0" -j ACCEPT
 -A ufw-before-output -o lxdfan0 -p udp -m udp --sport 67 -m comment --comment "generated for LXD network lxdfan0" -j ACCEPT
+-A ufw-before-output -o eth0 -p udp -m udp --sport 37008 -m comment --comment "generated for LXD network eth0" -j ACCEPT
 ```
 
 For IPv6 support:
@@ -118,18 +129,33 @@ Add the following rules before the COMMIT line.
 ```console
 # Allow LXD Ports
 # Input
+# Allow LXD Ports
+# Input
 -A ufw6-before-input -i lxdfan0 -p ipv6-icmp -m icmp6 --icmpv6-type 143 -m comment --comment "generated for LXD network lxdfan0" -j ACCEPT
 -A ufw6-before-input -i lxdfan0 -p ipv6-icmp -m icmp6 --icmpv6-type 136 -m comment --comment "generated for LXD network lxdfan0" -j ACCEPT
 -A ufw6-before-input -i lxdfan0 -p ipv6-icmp -m icmp6 --icmpv6-type 135 -m comment --comment "generated for LXD network lxdfan0" -j ACCEPT
 -A ufw6-before-input -i lxdfan0 -p ipv6-icmp -m icmp6 --icmpv6-type 133 -m comment --comment "generated for LXD network lxdfan0" -j ACCEPT
+-A ufw6-before-input -i lxdfan0 -p ipv6-icmp -m icmp6 --icmpv6-type 130 -m comment --comment "generated for LXD network lxdfan0" -j ACCEPT
 -A ufw6-before-input -i lxdfan0 -p ipv6-icmp -m icmp6 --icmpv6-type 4 -m comment --comment "generated for LXD network lxdfan0" -j ACCEPT
 -A ufw6-before-input -i lxdfan0 -p ipv6-icmp -m icmp6 --icmpv6-type 3 -m comment --comment "generated for LXD network lxdfan0" -j ACCEPT
 -A ufw6-before-input -i lxdfan0 -p ipv6-icmp -m icmp6 --icmpv6-type 2 -m comment --comment "generated for LXD network lxdfan0" -j ACCEPT
 -A ufw6-before-input -i lxdfan0 -p ipv6-icmp -m icmp6 --icmpv6-type 1 -m comment --comment "generated for LXD network lxdfan0" -j ACCEPT
+-A ufw6-before-input -i eth0 -p ipv6-icmp -m icmp6 --icmpv6-type 143 -m comment --comment "generated for LXD network eth0" -j ACCEPT
+-A ufw6-before-input -i eth0 -p ipv6-icmp -m icmp6 --icmpv6-type 136 -m comment --comment "generated for LXD network eth0" -j ACCEPT
+-A ufw6-before-input -i eth0 -p ipv6-icmp -m icmp6 --icmpv6-type 135 -m comment --comment "generated for LXD network eth0" -j ACCEPT
+-A ufw6-before-input -i eth0 -p ipv6-icmp -m icmp6 --icmpv6-type 133 -m comment --comment "generated for LXD network eth0" -j ACCEPT
+-A ufw6-before-input -i eth0 -p ipv6-icmp -m icmp6 --icmpv6-type 130 -m comment --comment "generated for LXD network eth0" -j ACCEPT
+-A ufw6-before-input -i eth0 -p ipv6-icmp -m icmp6 --icmpv6-type 4 -m comment --comment "generated for LXD network eth0" -j ACCEPT
+-A ufw6-before-input -i eth0 -p ipv6-icmp -m icmp6 --icmpv6-type 3 -m comment --comment "generated for LXD network eth0" -j ACCEPT
+-A ufw6-before-input -i eth0 -p ipv6-icmp -m icmp6 --icmpv6-type 2 -m comment --comment "generated for LXD network eth0" -j ACCEPT
+-A ufw6-before-input -i eth0 -p ipv6-icmp -m icmp6 --icmpv6-type 1 -m comment --comment "generated for LXD network eth0" -j ACCEPT
 -A ufw6-before-input -i lxdfan0 -p tcp -m tcp --dport 53 -m comment --comment "generated for LXD network lxdfan0" -j ACCEPT
 -A ufw6-before-input -i lxdfan0 -p udp -m udp --dport 53 -m comment --comment "generated for LXD network lxdfan0" -j ACCEPT
 -A ufw6-before-input -i lxdfan0 -p udp -m udp --dport 547 -m comment --comment "generated for LXD network lxdfan0" -j ACCEPT
+-A ufw6-before-input -i lxdfan0 -p udp -m udp --dport 1053 -m comment --comment "generated for LXD network lxdfan0" -j ACCEPT
+-A ufw6-before-input -i lxdfan0 -p tcp -m tcp --dport 8443 -m comment --comment "generated for LXD network lxdfan0" -j ACCEPT
 -A ufw6-before-input -i eth0 -p tcp -m tcp --dport 8443 -m comment --comment "generated for LXD network eth0" -j ACCEPT
+-A ufw6-before-input -i eth0 -p udp -m udp --dport 8472 -m comment --comment "generated for LXD network eth0" -j ACCEPT
 # Forward
 -A ufw6-before-forward -o lxdfan0 -m comment --comment "generated for LXD network lxdfan0" -j ACCEPT
 -A ufw6-before-forward -i lxdfan0 -m comment --comment "generated for LXD network lxdfan0" -j ACCEPT
@@ -138,14 +164,26 @@ Add the following rules before the COMMIT line.
 -A ufw6-before-output -o lxdfan0 -p ipv6-icmp -m icmp6 --icmpv6-type 136 -m comment --comment "generated for LXD network lxdfan0" -j ACCEPT
 -A ufw6-before-output -o lxdfan0 -p ipv6-icmp -m icmp6 --icmpv6-type 135 -m comment --comment "generated for LXD network lxdfan0" -j ACCEPT
 -A ufw6-before-output -o lxdfan0 -p ipv6-icmp -m icmp6 --icmpv6-type 134 -m comment --comment "generated for LXD network lxdfan0" -j ACCEPT
+-A ufw6-before-output -o lxdfan0 -p ipv6-icmp -m icmp6 --icmpv6-type 130 -m comment --comment "generated for LXD network lxdfan0" -j ACCEPT
 -A ufw6-before-output -o lxdfan0 -p ipv6-icmp -m icmp6 --icmpv6-type 128 -m comment --comment "generated for LXD network lxdfan0" -j ACCEPT
 -A ufw6-before-output -o lxdfan0 -p ipv6-icmp -m icmp6 --icmpv6-type 4 -m comment --comment "generated for LXD network lxdfan0" -j ACCEPT
 -A ufw6-before-output -o lxdfan0 -p ipv6-icmp -m icmp6 --icmpv6-type 3 -m comment --comment "generated for LXD network lxdfan0" -j ACCEPT
 -A ufw6-before-output -o lxdfan0 -p ipv6-icmp -m icmp6 --icmpv6-type 2 -m comment --comment "generated for LXD network lxdfan0" -j ACCEPT
 -A ufw6-before-output -o lxdfan0 -p ipv6-icmp -m icmp6 --icmpv6-type 1 -m comment --comment "generated for LXD network lxdfan0" -j ACCEPT
+-A ufw6-before-output -o eth0 -p ipv6-icmp -m icmp6 --icmpv6-type 143 -m comment --comment "generated for LXD network eth0" -j ACCEPT
+-A ufw6-before-output -o eth0 -p ipv6-icmp -m icmp6 --icmpv6-type 136 -m comment --comment "generated for LXD network eth0" -j ACCEPT
+-A ufw6-before-output -o eth0 -p ipv6-icmp -m icmp6 --icmpv6-type 135 -m comment --comment "generated for LXD network eth0" -j ACCEPT
+-A ufw6-before-output -o eth0 -p ipv6-icmp -m icmp6 --icmpv6-type 134 -m comment --comment "generated for LXD network eth0" -j ACCEPT
+-A ufw6-before-output -o eth0 -p ipv6-icmp -m icmp6 --icmpv6-type 130 -m comment --comment "generated for LXD network eth0" -j ACCEPT
+-A ufw6-before-output -o eth0 -p ipv6-icmp -m icmp6 --icmpv6-type 128 -m comment --comment "generated for LXD network eth0" -j ACCEPT
+-A ufw6-before-output -o eth0 -p ipv6-icmp -m icmp6 --icmpv6-type 4 -m comment --comment "generated for LXD network eth0" -j ACCEPT
+-A ufw6-before-output -o eth0 -p ipv6-icmp -m icmp6 --icmpv6-type 3 -m comment --comment "generated for LXD network eth0" -j ACCEPT
+-A ufw6-before-output -o eth0 -p ipv6-icmp -m icmp6 --icmpv6-type 2 -m comment --comment "generated for LXD network eth0" -j ACCEPT
+-A ufw6-before-output -o eth0 -p ipv6-icmp -m icmp6 --icmpv6-type 1 -m comment --comment "generated for LXD network eth0" -j ACCEPT
 -A ufw6-before-output -o lxdfan0 -p tcp -m tcp --sport 53 -m comment --comment "generated for LXD network lxdfan0" -j ACCEPT
 -A ufw6-before-output -o lxdfan0 -p udp -m udp --sport 53 -m comment --comment "generated for LXD network lxdfan0" -j ACCEPT
 -A ufw6-before-output -o lxdfan0 -p udp -m udp --sport 547 -m comment --comment "generated for LXD network lxdfan0" -j ACCEPT
+-A ufw6-before-output -o eth0 -p udp -m udp --sport 37008 -m comment --comment "generated for LXD network eth0" -j ACCEPT
 ```
 
 Restart firewall to apply settings:
