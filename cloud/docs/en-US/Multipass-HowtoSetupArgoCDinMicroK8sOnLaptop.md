@@ -294,12 +294,26 @@ with **kubectl port-forward**:
 microk8s.kubectl port-forward --address 0.0.0.0 svc/argocd-server -n argocd 6443:443
 ```
 
-This should make the **argocd-server** service availiable to the Multipass host on port *6443*. The multipass host in this case is our laptop. If you have a GUI and 
-a browser you can connect to ArgoCD web at https://127.0.0.1:6443   
+This should make the **argocd-server** service availiable to the Multipass VM on port **6443**. Our VM is running Ubuntu server without a GUI, so it's limited 
+how much fun we can have with that. If we had a GUI we could have browsed the ArgoCD web at https://127.0.0.1:6443...  
 
-**However** if we want it accessible from the rest of our network, or if we happen to run Multipass in a VM and not on our laptop, then we'll will have to route 
-traffic on this port from the Multipass host (the laptop) to the Multipass VM (it's inside that we're running our Kubernetes cluster). On the Multipass host, 
-start with finding the **IP of the Multipass VM**:
+We do have **curl** and some other utils, so we'll use those to check that the proxy is working:
+```console
+ubuntu@beecube:~$ curl https://127.0.0.1:6443
+curl: (60) SSL certificate problem: self-signed certificate
+More details here: https://curl.se/docs/sslcerts.html
+
+curl failed to verify the legitimacy of the server and therefore could not
+establish a secure connection to it. To learn more about this situation and
+how to fix it, please visit the web page mentioned above.
+```
+
+Look's good! Never mind the SSL warning. That's just because we're using a self generated certificate. We will setup a proper SSL certificate in another guide.  
+
+But we do need a GUI to call this setup descent. Luckily Multipass has done all the heavy lifting for us. The port is also available to the **Multipass host**
+at https://IPofMultipassVM:6443  
+
+On the Multipass host, finding the **IP of the Multipass VM**:
 ```console
 bee@multipassus:~$ multipass info beecube
 Name:           beecube
@@ -315,7 +329,28 @@ Memory usage:   1.4GiB out of 9.7GiB
 Mounts:         --
 ```
 
-Our multipass VM have the IP **10.95.75.112**.  
+In this case our Multipass VM have IP **10.95.75.112**. Let's test a connection:
+```console
+bee@multipassus:~$ curl https://10.95.75.112:6443
+curl: (60) SSL certificate problem: self-signed certificate
+More details here: https://curl.se/docs/sslcerts.html
+
+curl failed to verify the legitimacy of the server and therefore could not
+establish a secure connection to it. To learn more about this situation and
+how to fix it, please visit the web page mentioned above.
+```
+
+Dashboard accessed from host:
+![ArgoCD Dashboard Multipass Host](../../img/multipass-argocddashboardmphost.png "ArgoCD Dashboard Multipass Host")
+
+Starting to look better now, but a bit down the line you think you have struck gold. Inside your Kubernetes lab cluster you have a set of services that are so 
+great that they will catch more users than Twitter once had. There is only one problem. They can't all access the service from your laptop's keyboard... we're 
+talking billions, and billions, and billions of users. Looking away from the fact that you should then roll this out in a proper cloud, what you want is the 
+services accessible from the internet. I will show how to do that in Ubuntu.  
+
+To make our golden Kubernetes services available to the rest of the world we'll will have to route the traffic coming to the service (ArgoCD web at 6443 in this case) from 
+the Multipass host (the laptop) to the Multipass VM (that has the port from Kubernetes forwarded to it). We will need the **IP of the Multipass VM** we got earlier. 
+It had the IP **10.95.75.112**.  
 
 Then find the **name and IP of the network interface** used to connect the Multipass host to your 'normal' network:
 ```console
@@ -340,7 +375,7 @@ bee@multipassus:~$ ip a
        valid_lft forever preferred_lft forever
 ```
 
-On my Multipass host (my laptop) we have my normal network interface called **eth0** with IP **192.168.0.212**. 
+In the Multipass VM we have these networks (or something simular). The normal network interface is called **eth0** with IP **192.168.0.212**. 
 And I have a bridge called **mpqemubr0**. This is the bridge that leads to the Multipass VM network.  
 
 So we want to setup routing on the network interface **eth0** to IP **10.95.75.112** and port **6443**:
@@ -359,6 +394,7 @@ The username is **admin** and we found the password a bit earlier with **kubectl
 
 ![ArgoCD Dashboard](../../img/multipass-argocddashboard.png "ArgoCD Dashboard")
 
+Our service is now accessible for everyone that have a network route to the laptop.  
 
 ### Create App Via CLI <a id="create-app-via-cli"></a>
 Beautifull. But very empty.... let's deploy something to our cloud. First we need to set the current namespace to **argocd** by running the following command:
