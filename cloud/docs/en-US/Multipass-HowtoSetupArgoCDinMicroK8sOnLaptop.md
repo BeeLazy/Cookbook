@@ -313,7 +313,7 @@ Look's good! Never mind the SSL warning. That's just because we're using a self 
 But we do need a GUI to call this setup descent. Luckily Multipass has done all the heavy lifting for us. The port is also available to the **Multipass host**
 at https://IPofMultipassVM:6443  
 
-On the Multipass host, finding the **IP of the Multipass VM**:
+On the Multipass host, find the **IP of the Multipass VM**:
 ```console
 bee@multipassus:~$ multipass info beecube
 Name:           beecube
@@ -340,7 +340,7 @@ establish a secure connection to it. To learn more about this situation and
 how to fix it, please visit the web page mentioned above.
 ```
 
-Dashboard accessed from host:
+Dashboard accessed from laptop:
 ![ArgoCD Dashboard Multipass Host](../../img/multipass-argocddashboardmphost.png "ArgoCD Dashboard Multipass Host")
 
 Starting to look better now, but a bit down the line you think you have struck gold. Inside your Kubernetes lab cluster you have a set of services that are so 
@@ -348,11 +348,11 @@ great that they will catch more users than Twitter once had. There is only one p
 talking billions, and billions, and billions of users. Looking away from the fact that you should then roll this out in a proper cloud, what you want is the 
 services accessible from the internet. I will show how to do that in Ubuntu.  
 
-To make our golden Kubernetes services available to the rest of the world we'll will have to route the traffic coming to the service (ArgoCD web at 6443 in this case) from 
-the Multipass host (the laptop) to the Multipass VM (that has the port from Kubernetes forwarded to it). We will need the **IP of the Multipass VM** we got earlier. 
-It had the IP **10.95.75.112**.  
+To make our golden Kubernetes services available to the rest of the world we'll will have to route the traffic coming to the service (ArgoCD web port-forwarded 
+to 6443 in this case) from the Multipass host (the laptop) to the Multipass VM (that has the port from Kubernetes forwarded to it). We will need the 
+**IP of the Multipass VM** we got earlier. It had the IP **10.95.75.112**.  
 
-Then find the **name and IP of the network interface** used to connect the Multipass host to your 'normal' network:
+On the laptop find the **name and IP of the network interface** that it uses to connect to your 'normal' network. The one that has internet access:
 ```console
 bee@multipassus:~$ ip a
 1: lo: <LOOPBACK,UP,LOWER_UP> mtu 65536 qdisc noqueue state UNKNOWN group default qlen 1000
@@ -375,10 +375,10 @@ bee@multipassus:~$ ip a
        valid_lft forever preferred_lft forever
 ```
 
-In the Multipass VM we have these networks (or something simular). The normal network interface is called **eth0** with IP **192.168.0.212**. 
+On my laptop with a new install of Ubuntu server I have those networks. The normal network interface is called **eth0** with IP **192.168.0.212**. 
 And I have a bridge called **mpqemubr0**. This is the bridge that leads to the Multipass VM network.  
 
-So we want to setup routing on the network interface **eth0** to IP **10.95.75.112** and port **6443**:
+So we want to setup nat routing on the network interface **eth0** to IP **10.95.75.112** when there is traffic on port **6443**:
 ```console
 bee@multipassus:~$ sudo iptables -t nat -I PREROUTING 1 -i eth0 -p tcp --dport 6443 -j DNAT --to-destination 10.95.75.112:6443
 bee@multipassus:~$ sudo iptables -I FORWARD 1 -p tcp -d 10.95.75.112 --dport 6443 -j ACCEPT
@@ -394,7 +394,7 @@ The username is **admin** and we found the password a bit earlier with **kubectl
 
 ![ArgoCD Dashboard](../../img/multipass-argocddashboard.png "ArgoCD Dashboard")
 
-Our service is now accessible for everyone that have a network route to the laptop.  
+Our service is now accessible for everyone that have a network route to the laptop. When you **do** get rich, remember that sharing is caring.   
 
 ### Create App Via CLI <a id="create-app-via-cli"></a>
 Beautifull. But very empty.... let's deploy something to our cloud. First we need to set the current namespace to **argocd** by running the following command:
