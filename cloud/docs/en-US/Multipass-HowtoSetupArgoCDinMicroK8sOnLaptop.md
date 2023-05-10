@@ -299,7 +299,7 @@ a browser you can connect to ArgoCD web at https://127.0.0.1:6443
 
 **However** if we want it accessible from the rest of our network, or if we happen to run Multipass in a VM and not on our laptop, then we'll will have to route 
 traffic on this port from the Multipass host (the laptop) to the Multipass VM (it's inside that we're running our Kubernetes cluster). On the Multipass host, 
-start with finding the IP of the Multipass VM:
+start with finding the **IP of the Multipass VM**:
 ```console
 bee@multipassus:~$ multipass info beecube
 Name:           beecube
@@ -315,7 +315,35 @@ Memory usage:   1.4GiB out of 9.7GiB
 Mounts:         --
 ```
 
-And setup the routing on the network interface **eth0** to IP **10.95.75.112** and port **6443**:
+Our multipass VM have the IP **10.95.75.112**.  
+
+Then find the **name and IP of the network interface** used to connect the Multipass host to your 'normal' network:
+```console
+bee@multipassus:~$ ip a
+1: lo: <LOOPBACK,UP,LOWER_UP> mtu 65536 qdisc noqueue state UNKNOWN group default qlen 1000
+    link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00
+    inet 127.0.0.1/8 scope host lo
+       valid_lft forever preferred_lft forever
+    inet6 ::1/128 scope host
+       valid_lft forever preferred_lft forever
+2: eth0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc mq state UP group default qlen 1000
+    link/ether 00:15:5d:00:1e:13 brd ff:ff:ff:ff:ff:ff
+    inet 192.168.0.212/24 metric 100 brd 192.168.0.255 scope global dynamic eth0
+       valid_lft 64328sec preferred_lft 64328sec
+    inet6 fe80::215:5dff:fe00:1e13/64 scope link
+       valid_lft forever preferred_lft forever
+3: mpqemubr0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc noqueue state UP group default qlen 1000
+    link/ether 52:54:00:0b:a2:da brd ff:ff:ff:ff:ff:ff
+    inet 10.95.75.1/24 brd 10.95.75.255 scope global mpqemubr0
+       valid_lft forever preferred_lft forever
+    inet6 fe80::5054:ff:fe0b:a2da/64 scope link
+       valid_lft forever preferred_lft forever
+```
+
+On my Multipass host (my laptop) we have my normal network interface called **eth0** with IP **192.168.0.212**. 
+And I have a bridge called **mpqemubr0**. This is the bridge that leads to the Multipass VM network.  
+
+So we want to setup routing on the network interface **eth0** to IP **10.95.75.112** and port **6443**:
 ```console
 bee@multipassus:~$ sudo iptables -t nat -I PREROUTING 1 -i eth0 -p tcp --dport 6443 -j DNAT --to-destination 10.95.75.112:6443
 bee@multipassus:~$ sudo iptables -I FORWARD 1 -p tcp -d 10.95.75.112 --dport 6443 -j ACCEPT
