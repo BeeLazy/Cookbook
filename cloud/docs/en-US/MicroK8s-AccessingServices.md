@@ -111,6 +111,8 @@ permissions as shown in:
 https://github.com/kubernetes/dashboard/blob/master/docs/user/access-control/creating-sample-user.md
 ```
 
+> :warning: **Note:** **RBAC** is out of scope of this article. 
+
 To access the dashboard we can use the **microk8s dashboard-proxy** command. That will make the Dashboard accessible on **localhost**
 ```console
 ubuntu@accessdemo-master:~$ microk8s dashboard-proxy
@@ -145,8 +147,6 @@ accessdemo-master       Running           172.30.183.26    Ubuntu 22.04 LTS
 
 In a browser:
 ![Kubernetes Dashboard Login](../../img/microk8s-accessdemo-dashboardlogin.png "Kubernetes Dashboard Login")
-
-> :warning: **Note:** **RBAC** is out of scope of this article. 
 
 Use the token we got when starting the proxy to login. In a later guide we will setup role based authentication. 
 
