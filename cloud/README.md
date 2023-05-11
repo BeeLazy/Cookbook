@@ -1,5 +1,5 @@
 # cloud
-This section contains viritualization and cloud related technologies like:
+This section contains information about viritualization and cloud related technologies like:
 - LXD
 - Kubernetes
 
