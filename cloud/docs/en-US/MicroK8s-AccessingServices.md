@@ -16,7 +16,8 @@ as the frontend load balancer.
 5. [Accessing the Kubernetes dashboard with Proxy](#proxy)
 6. [Accessing a service with port-forward](#accessing-a-service-with-port-forward)
 7. [Accessing a service with NodePort](#accessing-a-service-with-nodeport)
-8. [Related links](#related-links)
+8. [Accessing a service with Ingress](#accessing-a-service-with-ingress)
+9. [Related links](#related-links)
 
 ## Create the test environment <a id="create-the-test-environment"></a>
 Create a Multipass VM called **accessdemo-master** and run the cloud-init script to configure it:
@@ -314,6 +315,246 @@ ubuntu@accessdemo-master:~$ curl http://localhost:30080
 And from the **Multipass Host at http://IPofMultipassVM:30080**:
 
 ![Nginx NodePort](../../img/microk8s-accessdemo-nginxnodeport.png "Nginx NodePort")
+
+## Accessing a service with Ingress <a id="accessing-a-service-with-ingress"></a>
+**NodePort** is a good tool for many things, but just like **port-forward** it suffers under the fact that it's limited low layers. 
+Let's say you want to serv more than one websites on port 80 from the same host. That's going to be a problem. 
+
+**Ingress** can help us with that. In Ingress we can create rules that define what service to route the different incoming calls to. 
+
+Start with enabling Ingress:
+```console
+ubuntu@accessdemo-master:~$ microk8s enable ingress
+Infer repository core for addon ingress
+Enabling Ingress
+ingressclass.networking.k8s.io/public created
+ingressclass.networking.k8s.io/nginx created
+namespace/ingress created
+serviceaccount/nginx-ingress-microk8s-serviceaccount created
+clusterrole.rbac.authorization.k8s.io/nginx-ingress-microk8s-clusterrole created
+role.rbac.authorization.k8s.io/nginx-ingress-microk8s-role created
+clusterrolebinding.rbac.authorization.k8s.io/nginx-ingress-microk8s created
+rolebinding.rbac.authorization.k8s.io/nginx-ingress-microk8s created
+configmap/nginx-load-balancer-microk8s-conf created
+configmap/nginx-ingress-tcp-microk8s-conf created
+configmap/nginx-ingress-udp-microk8s-conf created
+daemonset.apps/nginx-ingress-microk8s-controller created
+Ingress is enabled
+```
+
+Check that everything is OK
+```console
+ubuntu@accessdemo-master:~$ microk8s kubectl get pods -n ingress
+NAME                                      READY   STATUS    RESTARTS   AGE
+nginx-ingress-microk8s-controller-44dtp   1/1     Running   0          24s
+```
+
+Now we need to create a Ingress routing rule, so that when there is traffic incoming (on **my-nginx.pretenddomain.com** in this example), 
+it get's routed to our nginx webservice. 
+
+Contents of nginx-ingress.yaml
+```yaml
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: my-ingress
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+spec:
+  ingressClassName: nginx
+  rules:
+  - host: my-nginx.pretenddomain.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: my-nginx
+            port:
+              number: 80
+```
+
+Create the Ingress rule in Kubernetes
+```console
+ubuntu@accessdemo-master:~$ microk8s kubectl create -f nginx-ingress.yaml
+ingress.networking.k8s.io/my-ingress created
+```
+
+Check the status of it:
+```console
+ubuntu@accessdemo-master:~$ microk8s kubectl get ingress
+NAME         CLASS   HOSTS                        ADDRESS   PORTS   AGE
+my-ingress   nginx   my-nginx.pretenddomain.com             80      3s
+```
+
+Add the host to hosts if you dont have a working dns solution
+```console
+sudo nano /etc/hosts
+```
+
+If we try with the IP, we will see that nginx ingress is replying, but **404 Not Found** because there is no ruting rules on the IP.
+```console
+ubuntu@accessdemo-master:~$ curl http://172.30.183.26:80
+<html>
+<head><title>404 Not Found</title></head>
+<body>
+<center><h1>404 Not Found</h1></center>
+<hr><center>nginx</center>
+</body>
+</html>
+```
+
+If we try with the hostname we added to **hosts** (or dns record if you have working dns), we will see that we get routed to the correct place:
+```console
+ubuntu@accessdemo-master:~$ curl http://my-nginx.pretenddomain.com
+    <html>
+        <head>
+            <title>Welcome to our server</title>
+            <style>
+```
+
+Powershell on another computer in the network:
+```powershell
+PS C:\Users\bee> curl http://my-nginx.pretenddomain.com
+StatusCode        : 200
+StatusDescription : OK
+```
+
+To build further on the routing, we will deploy two echo apps.  
+
+Contents of echo-queen.yaml
+```yaml
+kind: Pod
+apiVersion: v1
+metadata:
+  name: my-queen
+  labels:
+    app: queen
+spec:
+  containers:
+    - name: queen-app
+      image: hashicorp/http-echo
+      args:
+        - "-text=queen"
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: my-queen
+spec:
+  selector:
+    app: queen
+  ports:
+    - port: 5678
+```
+
+Contents of echo-hive.yaml
+```yaml
+kind: Pod
+apiVersion: v1
+metadata:
+  name: my-hive
+  labels:
+    app: hive
+spec:
+  containers:
+    - name: hive-app
+      image: hashicorp/http-echo
+      args:
+        - "-text=hive"
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: my-hive
+spec:
+  selector:
+    app: hive
+  ports:
+    - port: 5678
+```
+
+Apply the services:
+```console
+ubuntu@accessdemo-master:~$ kubectl apply -f echo-queen.yaml
+pod/my-queen created
+service/my-queen created
+
+ubuntu@accessdemo-master:~$ kubectl apply -f echo-hive.yaml
+pod/my-hive created
+service/my-hive created
+```
+
+Then change the Ingress routing to account for the two new services.  
+
+Contents of nginx-echo-ingress.yaml
+```yaml
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: my-ingress
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+spec:
+  ingressClassName: nginx
+  rules:
+  - host: my-nginx.pretenddomain.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: my-nginx
+            port:
+              number: 80
+      - path: /queen
+        pathType: Prefix
+        backend:
+          service:
+            name: my-queen
+            port:
+              number: 5678
+      - path: /hive
+        pathType: Prefix
+        backend:
+          service:
+            name: my-hive
+            port:
+              number: 5678
+```
+
+Apply it:
+```console
+ubuntu@accessdemo-master:~$ microk8s kubectl delete -f nginx-ingress.yaml
+ingress.networking.k8s.io "my-ingress" deleted
+
+ubuntu@accessdemo-master:~$ microk8s kubectl create -f nginx-echo-ingress.yaml
+ingress.networking.k8s.io/my-ingress created
+```
+
+Now we can use that routing too:
+```console
+ubuntu@accessdemo-master:~$ curl http://my-nginx.pretenddomain.com/queen
+queen
+
+ubuntu@accessdemo-master:~$ curl http://my-nginx.pretenddomain.com/hive
+hive
+
+ubuntu@accessdemo-master:~$ curl http://my-nginx.pretenddomain.com/leadsnowhere
+    <html>
+        <head>
+            <title>Welcome to our server</title>
+            <style>
+```
+
+As we can see, the different rules lead to the different services. And our **/** catching everything that has no route.  
+
+Ingress can also route **TCP** and **UDP** services, and not just **HTTP**. Besides the routing options, another advantage of Ingress is 
+that it let's us consolidate all routing rules into a single resource.  
+
+This is starting to look like a manageble solution!  
 
 ## Related links <a id="related-links"></a>
 [Kubernetes basic operations - ubuntu.com](https://ubuntu.com/kubernetes/docs/operations)  

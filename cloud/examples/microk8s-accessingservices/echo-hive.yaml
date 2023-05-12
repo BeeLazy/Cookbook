@@ -1,0 +1,22 @@
+kind: Pod
+apiVersion: v1
+metadata:
+  name: my-hive
+  labels:
+    app: hive
+spec:
+  containers:
+    - name: hive-app
+      image: hashicorp/http-echo
+      args:
+        - "-text=hive"
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: my-hive
+spec:
+  selector:
+    app: hive
+  ports:
+    - port: 5678

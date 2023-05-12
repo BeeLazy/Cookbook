@@ -40,6 +40,7 @@ Contains images and gfx artifacts used in docs
     - Access Kubernetes Dashboard with proxy
 	- Access Kubernetes service with port-forward
 	- Access Kubernetes service with NodePort
+	- Access Kubernetes service with Ingress
 
 **LXD**:
 - [How-to install LXD](docs/en-US/LXD-HowtoInstall.md)

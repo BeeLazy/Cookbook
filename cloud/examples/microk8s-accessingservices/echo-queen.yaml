@@ -1,0 +1,22 @@
+kind: Pod
+apiVersion: v1
+metadata:
+  name: my-queen
+  labels:
+    app: queen
+spec:
+  containers:
+    - name: queen-app
+      image: hashicorp/http-echo
+      args:
+        - "-text=queen"
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: my-queen
+spec:
+  selector:
+    app: queen
+  ports:
+    - port: 5678
