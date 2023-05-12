@@ -41,6 +41,7 @@ Contains images and gfx artifacts used in docs
 	- Access Kubernetes service with port-forward
 	- Access Kubernetes service with NodePort
 	- Access Kubernetes service with Ingress
+	- Access clustered Kubernetes service with MetalLB
 
 **LXD**:
 - [How-to install LXD](docs/en-US/LXD-HowtoInstall.md)

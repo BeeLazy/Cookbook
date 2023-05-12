@@ -17,7 +17,8 @@ as the frontend load balancer.
 6. [Accessing a service with port-forward](#accessing-a-service-with-port-forward)
 7. [Accessing a service with NodePort](#accessing-a-service-with-nodeport)
 8. [Accessing a service with Ingress](#accessing-a-service-with-ingress)
-9. [Related links](#related-links)
+9. [Accessing a clustered service with MetalLB](#accessing-a-clustered-service-with-metallb)
+10. [Related links](#related-links)
 
 ## Create the test environment <a id="create-the-test-environment"></a>
 Create a Multipass VM called **accessdemo-master** and run the cloud-init script to configure it:
@@ -377,6 +378,7 @@ spec:
 
 Create the Ingress rule in Kubernetes
 ```console
+ubuntu@accessdemo-master:~$ wget https://raw.githubusercontent.com/BeeLazy/Cookbook/main/cloud/examples/microk8s-accessingservices/nginx-ingress.yaml
 ubuntu@accessdemo-master:~$ microk8s kubectl create -f nginx-ingress.yaml
 ingress.networking.k8s.io/my-ingress created
 ```
@@ -384,8 +386,8 @@ ingress.networking.k8s.io/my-ingress created
 Check the status of it:
 ```console
 ubuntu@accessdemo-master:~$ microk8s kubectl get ingress
-NAME         CLASS   HOSTS                        ADDRESS   PORTS   AGE
-my-ingress   nginx   my-nginx.pretenddomain.com             80      3s
+NAME         CLASS   HOSTS                        ADDRESS     PORTS   AGE
+my-ingress   nginx   my-nginx.pretenddomain.com   127.0.0.1   80      114s
 ```
 
 Add a DNS record the service. Since I don't even own the pretenddomain.com I had to add it to my **hosts** instead:
@@ -395,7 +397,7 @@ sudo nano /etc/hosts
 
 If we try with the IP, we will see that nginx ingress is replying, but **404 Not Found** because there is no ruting rules on the IP.
 ```console
-ubuntu@accessdemo-master:~$ curl http://172.30.183.26
+ubuntu@accessdemo-master:~$ curl http://172.25.232.133
 <html>
 <head><title>404 Not Found</title></head>
 <body>
@@ -477,6 +479,9 @@ spec:
 
 Apply the services:
 ```console
+ubuntu@accessdemo-master:~$ wget https://raw.githubusercontent.com/BeeLazy/Cookbook/main/cloud/examples/microk8s-accessingservices/echo-queen.yaml
+ubuntu@accessdemo-master:~$ wget https://raw.githubusercontent.com/BeeLazy/Cookbook/main/cloud/examples/microk8s-accessingservices/echo-hive.yaml
+
 ubuntu@accessdemo-master:~$ kubectl apply -f echo-queen.yaml
 pod/my-queen created
 service/my-queen created
@@ -527,6 +532,8 @@ spec:
 
 Remove the old Ingress routing, and apply the new we just created:
 ```console
+ubuntu@accessdemo-master:~$ wget https://raw.githubusercontent.com/BeeLazy/Cookbook/main/cloud/examples/microk8s-accessingservices/nginx-echo-ingress.yaml
+
 ubuntu@accessdemo-master:~$ microk8s kubectl delete -f nginx-ingress.yaml
 ingress.networking.k8s.io "my-ingress" deleted
 
@@ -549,12 +556,194 @@ ubuntu@accessdemo-master:~$ curl http://my-nginx.pretenddomain.com/leadsnowhere
             <style>
 ```
 
-As we can see, the different rules lead to the different services. And our **/ rule** catching everything that has no route.  
+As we can see, the different rules lead to the different services. And our **/ rule** catching everything that has no route. The 
+longest rule that matches wins.  
 
-Ingress can also route **TCP** and **UDP** services, not just **HTTP**. Besides the routing options, another advantage of Ingress is 
-that it let's us **consolidate all routing rules** into a single resource.  
+Ingress can also route **TCP** and **UDP** services, not just **HTTP**. Besides the routing options, another advantage of Ingress 
+is that it let's us **consolidate all routing rules** into a single resource.  
 
 This is starting to look like a manageble solution!  
 
+## Accessing a clustered service with MetalLB <a id="accessing-a-clustered-service-with-metallb"></a>
+But what happens on a cluster. We only have a master node right now, so we need to add a couple workers:
+
+Create two Multipass VMs called **accessdemo-master-2** and **accessdemo-master-3**. Use the cloud-init script we downloaded earlier:
+```console
+multipass launch --cloud-init MicroK8s.yaml \
+--timeout 1200 \
+--name accessdemo-master-2 \
+--memory 12G \
+--cpus 6 \
+--disk 50G
+
+multipass launch --cloud-init MicroK8s.yaml \
+--timeout 1200 \
+--name accessdemo-master-3 \
+--memory 12G \
+--cpus 6 \
+--disk 50G
+```
+
+> :warning: **Caution:** If you don't have 3* 12G memory availiable, you will need to adjust the resources
+
+When they are done, we need to join them to the cluster. First generate a join key on the **accessdemo-master** node
+```console
+ubuntu@accessdemo-master:~$ microk8s add-node
+From the node you wish to join to this cluster, run the following:
+microk8s join 172.25.232.133:25000/17953b4b86d9af021240c847bea96d85/47b98a18eb80
+
+Use the '--worker' flag to join a node as a worker not running the control plane, eg:
+microk8s join 172.25.232.133:25000/17953b4b86d9af021240c847bea96d85/47b98a18eb80 --worker
+
+If the node you are adding is not reachable through the default interface you can use one of the following:
+microk8s join 172.25.232.133:25000/17953b4b86d9af021240c847bea96d85/47b98a18eb80
+```
+
+Then on **accessdemo-master-2** add it without the **--worker** flag:
+```console
+ubuntu@accessdemo-master-2:~$ microk8s join 172.25.232.133:25000/17953b4b86d9af021240c847bea96d85/47b98a18eb80
+WARNING: Hostpath storage is enabled and is not suitable for multi node clusters.
+
+Contacting cluster at 172.25.232.133
+Waiting for this node to finish joining the cluster. .. .. ..
+```
+
+Create another key for **accessdemo-master-3** and then join it:
+```console
+ubuntu@accessdemo-master:~$ microk8s add-node
+From the node you wish to join to this cluster, run the following:
+microk8s join 172.25.232.133:25000/da1d61fa4aa71f281ddd7dd960311f08/47b98a18eb80
+
+Use the '--worker' flag to join a node as a worker not running the control plane, eg:
+microk8s join 172.25.232.133:25000/da1d61fa4aa71f281ddd7dd960311f08/47b98a18eb80 --worker
+
+If the node you are adding is not reachable through the default interface you can use one of the following:
+microk8s join 172.25.232.133:25000/da1d61fa4aa71f281ddd7dd960311f08/47b98a18eb80
+```
+
+```console
+ubuntu@accessdemo-master-3:~$ microk8s join 172.25.232.133:25000/da1d61fa4aa71f281ddd7dd960311f08/47b98a18eb80
+WARNING: Hostpath storage is enabled and is not suitable for multi node clusters.
+
+Contacting cluster at 172.25.232.133
+Waiting for this node to finish joining the cluster. .. .. ..
+```
+
+With all 3 nodes in the cluster, we're ready to check the status:
+```console
+ubuntu@accessdemo-master-3:~$ microk8s status
+microk8s is running
+high-availability: yes
+  datastore master nodes: 172.25.232.133:19001 172.25.229.242:19001 172.25.239.237:19001
+  datastore standby nodes: none
+  
+ubuntu@accessdemo-worker-2:~$ microk8s.kubectl get nodes
+NAME                  STATUS   ROLES    AGE    VERSION
+accessdemo-master     Ready    <none>   28m    v1.27.0
+accessdemo-master-2   Ready    <none>   2m7s   v1.27.0
+accessdemo-master-3   Ready    <none>   62s    v1.27.0
+```
+
+We see that when there are 3 nodes that can run the **control plane**, then high-availability is automatically enabled. 
+However that also gives us **1 Ingress controller per node**:
+```console
+ubuntu@accessdemo-master:~$ microk8s kubectl get pods -n ingress
+NAME                                      READY   STATUS    RESTARTS        AGE
+nginx-ingress-microk8s-controller-plxs4   1/1     Running   0               27m
+nginx-ingress-microk8s-controller-vlhv9   1/1     Running   0               11m
+nginx-ingress-microk8s-controller-k2vpl   1/1     Running   1 (9m35s ago)   10m
+```
+
+This ruins the fun for our Ingress ruting, since it now has 3 entry points, no load balancing nor any failover for the entrypoints. 
+To solve this we need to run a load balancer in front of Ingress. **MetalLB** is one of these load balancers.  
+
+Start with enabling **MetalLB**. Give it a range from the 'external' IP range (that's not used by anything else):
+```console
+ubuntu@accessdemo-master:~$ microk8s enable metallb
+Infer repository core for addon metallb
+Enabling MetalLB
+Enter each IP address range delimited by comma (e.g. '10.64.140.43-10.64.140.49,192.168.0.105-192.168.0.111'): 172.25.232.150-172.25.232.199
+Applying Metallb manifest
+customresourcedefinition.apiextensions.k8s.io/addresspools.metallb.io created
+customresourcedefinition.apiextensions.k8s.io/bfdprofiles.metallb.io created
+customresourcedefinition.apiextensions.k8s.io/bgpadvertisements.metallb.io created
+customresourcedefinition.apiextensions.k8s.io/bgppeers.metallb.io created
+customresourcedefinition.apiextensions.k8s.io/communities.metallb.io created
+customresourcedefinition.apiextensions.k8s.io/ipaddresspools.metallb.io created
+customresourcedefinition.apiextensions.k8s.io/l2advertisements.metallb.io created
+namespace/metallb-system created
+serviceaccount/controller created
+serviceaccount/speaker created
+clusterrole.rbac.authorization.k8s.io/metallb-system:controller created
+clusterrole.rbac.authorization.k8s.io/metallb-system:speaker created
+role.rbac.authorization.k8s.io/controller created
+role.rbac.authorization.k8s.io/pod-lister created
+clusterrolebinding.rbac.authorization.k8s.io/metallb-system:controller created
+clusterrolebinding.rbac.authorization.k8s.io/metallb-system:speaker created
+rolebinding.rbac.authorization.k8s.io/controller created
+secret/webhook-server-cert created
+service/webhook-service created
+rolebinding.rbac.authorization.k8s.io/pod-lister created
+daemonset.apps/speaker created
+deployment.apps/controller created
+validatingwebhookconfiguration.admissionregistration.k8s.io/validating-webhook-configuration created
+Waiting for Metallb controller to be ready.
+error: timed out waiting for the condition on deployments/controller
+MetalLB controller is still not ready
+deployment.apps/controller condition met
+ipaddresspool.metallb.io/default-addresspool created
+l2advertisement.metallb.io/default-advertise-all-pools created
+MetalLB is enabled
+```
+
+Out of the box there are no **service** config for MetalLB:
+```console
+ubuntu@accessdemo-master:~$ microk8s kubectl -n ingress get svc
+No resources found in ingress namespace.
+```
+
+Create a config for it.  
+
+Contents of **nginx-ingress-metallb.yaml**
+```yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: ingress
+  namespace: ingress
+spec:
+  selector:
+    name: nginx-ingress-microk8s
+  type: LoadBalancer
+  # loadBalancerIP is optional. MetalLB will automatically allocate an IP from its pool if not
+  # specified. You can also specify one manually.
+  # loadBalancerIP: x.y.z.a
+  ports:
+    - name: http
+      protocol: TCP
+      port: 80
+      targetPort: 80
+    - name: https
+      protocol: TCP
+      port: 443
+      targetPort: 443
+```
+
+Apply the config:
+```console
+ubuntu@accessdemo-master:~$ microk8s kubectl -n ingress get svc
+NAME      TYPE           CLUSTER-IP       EXTERNAL-IP      PORT(S)                      AGE
+ingress   LoadBalancer   10.152.183.231   172.25.232.150   80:32062/TCP,443:31534/TCP   8m28s
+```
+
+Change **hosts** or **dns record** to point at the **EXTERNAL-IP**, and test:
+```console
+ubuntu@accessdemo-master:~$ curl http://my-nginx.pretenddomain.com/hive
+hive
+```
+
+We now have a manageble ruting solution for our Kubernetes services, and that concludes this guide.  
+
 ## Related links <a id="related-links"></a>
 [Kubernetes basic operations - ubuntu.com](https://ubuntu.com/kubernetes/docs/operations)  
+[MetalLB Addon - microk8s.io](https://microk8s.io/docs/addon-metallb)  
