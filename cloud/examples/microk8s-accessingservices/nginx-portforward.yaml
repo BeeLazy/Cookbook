@@ -10,7 +10,7 @@ spec:
       image: linuxserver/nginx
       ports:
         - containerPort: 80
-          name: "nginx-http"
+          name: nginx-http
 ---
 apiVersion: v1
 kind: Service
@@ -18,7 +18,9 @@ metadata:
   name: my-nginx
 spec:
   ports:
-  - port: 80
+  - name: http
+    port: 80
     protocol: TCP
+    targetPort: nginx-http
   selector:
-    run: my-nginx
+    app: nginx
