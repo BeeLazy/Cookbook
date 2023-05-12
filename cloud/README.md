@@ -38,6 +38,8 @@ Contains images and gfx artifacts used in docs
 - [How-to access MicroK8s services](docs/en-US/MicroK8s-AccessingServices.md)
   - Accessing services in Kubernetes from outside kubernetes
     - Access Kubernetes Dashboard with proxy
+	- Access Kubernetes service with port-forward
+	- Access Kubernetes service with NodePort
 
 **LXD**:
 - [How-to install LXD](docs/en-US/LXD-HowtoInstall.md)
