@@ -565,7 +565,7 @@ is that it let's us **consolidate all routing rules** into a single resource.
 This is starting to look like a manageble solution!  
 
 ## Accessing a clustered service with MetalLB <a id="accessing-a-clustered-service-with-metallb"></a>
-But what happens on a cluster. We only have a master node right now, so we need to add a couple workers:
+But what happens on a cluster? We only have a master node right now, so we need to add a couple more nodes:
 
 Create two Multipass VMs called **accessdemo-master-2** and **accessdemo-master-3**. Use the cloud-init script we downloaded earlier:
 ```console
@@ -599,7 +599,7 @@ If the node you are adding is not reachable through the default interface you ca
 microk8s join 172.25.232.133:25000/17953b4b86d9af021240c847bea96d85/47b98a18eb80
 ```
 
-Then on **accessdemo-master-2** add it without the **--worker** flag:
+Then on **accessdemo-master-2** add it without the **--worker** flag. We will add pure workers in a later guide:
 ```console
 ubuntu@accessdemo-master-2:~$ microk8s join 172.25.232.133:25000/17953b4b86d9af021240c847bea96d85/47b98a18eb80
 WARNING: Hostpath storage is enabled and is not suitable for multi node clusters.
@@ -738,11 +738,13 @@ ingress   LoadBalancer   10.152.183.231   172.25.232.150   80:32062/TCP,443:3153
 
 Change **hosts** or **dns record** to point at the **EXTERNAL-IP**, and test:
 ```console
-ubuntu@accessdemo-master:~$ curl http://my-nginx.pretenddomain.com/hive
-hive
+PS C:\Users\bee> curl http://my-nginx.pretenddomain.com/queen
+StatusCode        : 200
+StatusDescription : OK
+Content           : queen
 ```
 
-We now have a manageble ruting solution for our Kubernetes services, and that concludes this guide.  
+We now have a manageable ruting solution for our Kubernetes services, and that concludes this guide.  
 
 ## Related links <a id="related-links"></a>
 [Kubernetes basic operations - ubuntu.com](https://ubuntu.com/kubernetes/docs/operations)  
