@@ -15,7 +15,8 @@ as the frontend load balancer.
 4. [Create the test environment](#create-the-test-environment)
 5. [Accessing the Kubernetes dashboard with Proxy](#proxy)
 6. [Accessing a service with port-forward](#accessing-a-service-with-port-forward)
-7. [Related links](#related-links)
+7. [Accessing a service with NodePort](#accessing-a-service-with-nodeport)
+8. [Related links](#related-links)
 
 ## Create the test environment <a id="create-the-test-environment"></a>
 Create a Multipass VM called **accessdemo-master** and run the cloud-init script to configure it:
@@ -234,6 +235,85 @@ ubuntu@accessdemo-master:~$ curl http://localhost:8080
 And from the **Multipass Host at http://IPofMultipassVM:8080**:
 
 ![Nginx port-forward](../../img/microk8s-accessdemo-nginxportforward.png "Nginx port-forward")
+
+## Accessing a service with NodePort <a id="accessing-a-service-with-nodeport"></a>
+**kubectl port-forward** is a practical tool to open a port now and then for various reasons, but it requires the console to stay open and it quickly becomes a headache 
+if you try to manage all the ports that way.  
+
+A more permanent solution to this is **NodePort** which allow us to define the port in the service. Let us edit our Nginx deployment, to see how NodePort works.  
+
+In this config we have the nginx webserver listening to **port 80 in the container** 
+and we have a **NodePort** service that will forward it to **port 30080 on the host**. NodePort uses a range of 30000-32767.  
+
+Create **nginx-nodeport.yaml**
+```yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: my-nginx
+  labels:
+    app: nginx
+spec:
+  containers:
+    - name: nginx
+      image: linuxserver/nginx
+      ports:
+        - containerPort: 80
+          name: nginx-http
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: my-nginx
+spec:
+  type: NodePort
+  ports:
+    - name: http
+      port: 80
+      nodePort: 30080
+      targetPort: nginx-http
+  selector:
+    app: nginx
+```
+
+Or download it:
+```console
+ubuntu@accessdemo-master:~$ wget https://raw.githubusercontent.com/BeeLazy/Cookbook/main/cloud/examples/microk8s-accessingservices/nginx-nodeport.yaml
+2023-05-11 18:07:42 (20.9 MB/s) - 'nginx-nodeport.yaml' saved [418/418]
+```
+
+Apply it to reconfigure our Nginx deployment:
+```console
+ubuntu@accessdemo-master:~$ kubectl apply -f nginx-nodeport.yaml
+pod/my-nginx unchanged
+service/my-nginx configured
+```
+
+Check that everything went ok:
+```console
+ubuntu@accessdemo-master:~$ kubectl get pods -o wide
+NAME       READY   STATUS    RESTARTS   AGE   IP            NODE                NOMINATED NODE   READINESS GATES
+my-nginx   1/1     Running   0          30m   10.1.183.77   accessdemo-master   <none>           <none>
+
+ubuntu@accessdemo-master:~$ kubectl get service
+NAME         TYPE        CLUSTER-IP      EXTERNAL-IP   PORT(S)        AGE
+kubernetes   ClusterIP   10.152.183.1    <none>        443/TCP        22h
+my-nginx     NodePort    10.152.183.47   <none>        80:30080/TCP   30m
+```
+
+We can now access the webserver from the **Multipass VM at http://localhost:30080**:
+```console
+ubuntu@accessdemo-master:~$ curl http://localhost:30080
+    <html>
+        <head>
+            <title>Welcome to our server</title>
+            <style>
+<snipp>
+```
+
+And from the **Multipass Host at http://IPofMultipassVM:30080**:
+
+![Nginx NodePort](../../img/microk8s-accessdemo-nginxnodeport.png "Nginx NodePort")
 
 ## Related links <a id="related-links"></a>
 [Kubernetes basic operations - ubuntu.com](https://ubuntu.com/kubernetes/docs/operations)  
