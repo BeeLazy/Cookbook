@@ -317,8 +317,8 @@ And from the **Multipass Host at http://IPofMultipassVM:30080**:
 ![Nginx NodePort](../../img/microk8s-accessdemo-nginxnodeport.png "Nginx NodePort")
 
 ## Accessing a service with Ingress <a id="accessing-a-service-with-ingress"></a>
-**NodePort** is a good tool for many things, but just like **port-forward** it suffers under the fact that it's limited low layers. 
-Let's say you want to serv more than one websites on port 80 from the same host. That's going to be a problem. 
+**NodePort** is a good tool for many things, but just like **port-forward** it suffers under the fact that it's limited to low layers. 
+Let's say you want to serve more than one websites on port 80 from the same host. That's going to be a problem. 
 
 **Ingress** can help us with that. In Ingress we can create rules that define what service to route the different incoming calls to. 
 
@@ -352,7 +352,7 @@ nginx-ingress-microk8s-controller-44dtp   1/1     Running   0          24s
 Now we need to create a Ingress routing rule, so that when there is traffic incoming (on **my-nginx.pretenddomain.com** in this example), 
 it get's routed to our nginx webservice. 
 
-Contents of nginx-ingress.yaml
+Contents of **nginx-ingress.yaml**
 ```yaml
 apiVersion: networking.k8s.io/v1
 kind: Ingress
@@ -388,14 +388,14 @@ NAME         CLASS   HOSTS                        ADDRESS   PORTS   AGE
 my-ingress   nginx   my-nginx.pretenddomain.com             80      3s
 ```
 
-Add the host to hosts if you dont have a working dns solution
+Add a DNS record the service. Since I don't even own the pretenddomain.com I had to add it to my **hosts** instead:
 ```console
 sudo nano /etc/hosts
 ```
 
 If we try with the IP, we will see that nginx ingress is replying, but **404 Not Found** because there is no ruting rules on the IP.
 ```console
-ubuntu@accessdemo-master:~$ curl http://172.30.183.26:80
+ubuntu@accessdemo-master:~$ curl http://172.30.183.26
 <html>
 <head><title>404 Not Found</title></head>
 <body>
@@ -423,7 +423,7 @@ StatusDescription : OK
 
 To build further on the routing, we will deploy two echo apps.  
 
-Contents of echo-queen.yaml
+Contents of **echo-queen.yaml**
 ```yaml
 kind: Pod
 apiVersion: v1
@@ -449,7 +449,7 @@ spec:
     - port: 5678
 ```
 
-Contents of echo-hive.yaml
+Contents of **echo-hive.yaml**
 ```yaml
 kind: Pod
 apiVersion: v1
@@ -488,7 +488,7 @@ service/my-hive created
 
 Then change the Ingress routing to account for the two new services.  
 
-Contents of nginx-echo-ingress.yaml
+Contents of **nginx-echo-ingress.yaml**
 ```yaml
 apiVersion: networking.k8s.io/v1
 kind: Ingress
@@ -525,7 +525,7 @@ spec:
               number: 5678
 ```
 
-Apply it:
+Remove the old Ingress routing, and apply the new we just created:
 ```console
 ubuntu@accessdemo-master:~$ microk8s kubectl delete -f nginx-ingress.yaml
 ingress.networking.k8s.io "my-ingress" deleted
@@ -534,7 +534,7 @@ ubuntu@accessdemo-master:~$ microk8s kubectl create -f nginx-echo-ingress.yaml
 ingress.networking.k8s.io/my-ingress created
 ```
 
-Now we can use that routing too:
+Now we can use the new **/hive** and **/queen** routing too:
 ```console
 ubuntu@accessdemo-master:~$ curl http://my-nginx.pretenddomain.com/queen
 queen
@@ -549,10 +549,10 @@ ubuntu@accessdemo-master:~$ curl http://my-nginx.pretenddomain.com/leadsnowhere
             <style>
 ```
 
-As we can see, the different rules lead to the different services. And our **/** catching everything that has no route.  
+As we can see, the different rules lead to the different services. And our **/ rule** catching everything that has no route.  
 
-Ingress can also route **TCP** and **UDP** services, and not just **HTTP**. Besides the routing options, another advantage of Ingress is 
-that it let's us consolidate all routing rules into a single resource.  
+Ingress can also route **TCP** and **UDP** services, not just **HTTP**. Besides the routing options, another advantage of Ingress is 
+that it let's us **consolidate all routing rules** into a single resource.  
 
 This is starting to look like a manageble solution!  
 
