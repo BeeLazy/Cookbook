@@ -12,9 +12,10 @@ as the frontend load balancer.
 1. [About](#about)
 2. [Description](#description)
 3. [Table of contents](#table-of-contents)
-5. [Create the test environment](#create-the-test-environment)
-9. [Accessing the Kubernetes dashboard with Proxy](#proxy)
-9. [Related links](#related-links)
+4. [Create the test environment](#create-the-test-environment)
+5. [Accessing the Kubernetes dashboard with Proxy](#proxy)
+6. [Accessing a service with port-forward](#accessing-a-service-with-port-forward)
+7. [Related links](#related-links)
 
 ## Create the test environment <a id="create-the-test-environment"></a>
 Create a Multipass VM called **accessdemo-master** and run the cloud-init script to configure it:
@@ -151,6 +152,88 @@ In a browser:
 Use the token we got when starting the proxy to login. In a later guide we will setup role based authentication. 
 
 ![Kubernetes Dashboard](../../img/microk8s-accessdemo-dashboard.png "Kubernetes Dashboard")
+
+## Accessing a service with port-forward <a id="accessing-a-service-with-port-forward"></a>
+Having access to the dashboard is good, but this will not help us with all the other services we plan to run in our Kubernetes.  
+
+Kubectl have a command called **port-forward** that will help us with this. It will forward a port from any service to the host.  
+
+Let us deploy a Nginx webserver to see how it works. In this config we have a nginx webserver listening to **port 80 in the container** 
+
+Create **nginx-portforward.yaml**
+```yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: my-nginx
+  labels:
+    app: nginx
+spec:
+  containers:
+    - name: nginx
+      image: linuxserver/nginx
+      ports:
+        - containerPort: 80
+          name: nginx-http
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: my-nginx
+spec:
+  ports:
+  - name: http
+    port: 80
+    protocol: TCP
+    targetPort: nginx-http
+  selector:
+    app: nginx
+```
+
+Or download it:
+```console
+ubuntu@accessdemo-master:~$ wget https://raw.githubusercontent.com/BeeLazy/Cookbook/main/cloud/examples/microk8s-accessingservices/nginx-portforward.yaml
+2023-05-11 18:36:38 (12.7 MB/s) - 'nginx-portforward.yaml' saved [352/352]
+```
+
+Apply the pod:
+```console
+ubuntu@accessdemo-master:~$ kubectl apply -f nginx-portforward.yaml
+pod/my-nginx created
+service/my-nginx created
+```
+
+Check that everything went ok:
+```console
+ubuntu@accessdemo-master:~$ kubectl get pods -o wide
+NAME       READY   STATUS    RESTARTS   AGE   IP            NODE                NOMINATED NODE   READINESS GATES
+my-nginx   1/1     Running   0          4s    10.1.183.77   accessdemo-master   <none>           <none>
+
+ubuntu@accessdemo-master:~$ kubectl get service
+NAME         TYPE        CLUSTER-IP      EXTERNAL-IP   PORT(S)   AGE
+kubernetes   ClusterIP   10.152.183.1    <none>        443/TCP   21h
+my-nginx     ClusterIP   10.152.183.47   <none>        80/TCP    21s
+```
+
+The Nginx webserver is currently only available on the Kubernetes cluster network on port 80. To be able to connect to it, we will have to make the port available 
+outside Kubernetes. One way to do that is to forward the port with **kubectl port-forward**. Here we forward it to **port 8080** on the host:
+```console
+microk8s.kubectl port-forward --address 0.0.0.0 svc/my-nginx -n default 8080:80
+```
+
+We can now access the webserver from the **Multipass VM at http://localhost:8080**:
+```console
+ubuntu@accessdemo-master:~$ curl http://localhost:8080
+    <html>
+        <head>
+            <title>Welcome to our server</title>
+            <style>
+<snipp>
+```
+
+And from the **Multipass Host at http://IPofMultipassVM:8080**:
+
+![Nginx port-forward](../../img/microk8s-accessdemo-nginxportforward.png "Nginx port-forward")
 
 ## Related links <a id="related-links"></a>
 [Kubernetes basic operations - ubuntu.com](https://ubuntu.com/kubernetes/docs/operations)  
