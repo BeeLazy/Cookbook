@@ -47,3 +47,7 @@ Contains images and gfx artifacts used in docs
 - [How-to install LXD](docs/en-US/LXD-HowtoInstall.md)
   - Install a 3 noded LXD cluster
   - Basic tasks like starting and stopping containers
+
+**SSH**:
+- [Security of Interactive and Automated Access Management Using Secure Shell (SSH)](docs/en-US/NIST.IR.7966.pdf)
+  - National Institute of Standards and Technology reference doc IR.7966
