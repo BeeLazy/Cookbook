@@ -731,7 +731,7 @@ spec:
 
 Apply the config:
 ```console
-ubuntu@accessdemo-master:~$ kubectl create -f nginx-ingress-metallb.yaml
+ubuntu@accessdemo-master:~$ microk8s kubectl create -f nginx-ingress-metallb.yaml
 service/ingress created
 
 ubuntu@accessdemo-master:~$ microk8s kubectl -n ingress get svc
