@@ -731,6 +731,9 @@ spec:
 
 Apply the config:
 ```console
+ubuntu@accessdemo-master:~$ kubectl create -f nginx-ingress-metallb.yaml
+service/ingress created
+
 ubuntu@accessdemo-master:~$ microk8s kubectl -n ingress get svc
 NAME      TYPE           CLUSTER-IP       EXTERNAL-IP      PORT(S)                      AGE
 ingress   LoadBalancer   10.152.183.231   172.25.232.150   80:32062/TCP,443:31534/TCP   8m28s
