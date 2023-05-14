@@ -749,6 +749,8 @@ Content           : queen
 
 We now have a manageable ruting solution for our Kubernetes services, and that concludes this guide.  
 
+A natural next step is to [setup TSL certificates](Multipass-CertManager.md) for the services.  
+
 ## Related links <a id="related-links"></a>
 [Kubernetes basic operations - ubuntu.com](https://ubuntu.com/kubernetes/docs/operations)  
 [MetalLB Addon - microk8s.io](https://microk8s.io/docs/addon-metallb)  

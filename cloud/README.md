@@ -44,6 +44,8 @@ Contains images and gfx artifacts used in docs
 	- Access Kubernetes service with NodePort
 	- Access Kubernetes service with Ingress
 	- Access clustered Kubernetes service with MetalLB
+- [Setup certificate management](docs/en-US/MicroK8s-CertManager.md)
+  - Use cert-manager to automatically manage Let's Encrypt certificates
 
 **LXD**:
 - [How-to install LXD](docs/en-US/LXD-HowtoInstall.md)

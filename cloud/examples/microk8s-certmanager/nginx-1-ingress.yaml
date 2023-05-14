@@ -1,0 +1,22 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+ name: nginx-1-ingress
+ annotations:
+   cert-manager.io/cluster-issuer: lets-encrypt
+spec:
+ tls:
+ - hosts:
+   - nginx-1.the-bee.site
+   secretName: nginx-1-ingress-tls
+ rules:
+ - host: nginx-1.the-bee.site
+   http:
+     paths:
+     - backend:
+         service:
+           name: nginx-1
+           port:
+             number: 80
+       path: /
+       pathType: Exact
