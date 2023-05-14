@@ -112,8 +112,11 @@ Launched: sshtestvm
 ### Add SSH key to existing VM <a id="add-ssh-key-to-existing-vm"></a>
 If you did not add the SSH keys to the server when it was created, you can add it at a later time too. 
 
-To remotely add them to a Windows Server we need to add the contents of the public key we made (\.ssh\id_ed25519.pub) and add 
-it to **authorized_keys** in **C:\Users\username\.ssh\ ** for **standard user**
+**Standard user** needs to be added to the **authorized_keys** file in the **\\.ssh\\** directory (se above).  
+
+> :warning: **Note:** On Windows **administrative user** should be added to **administrators_authorized_keys** in **C:\ProgramData\ssh\\**
+
+To remotely add **standard user** SSH keys to a Windows Server
 ```powershell
 # Get the public key file generated previously on your client
 $authorizedKey = Get-Content -Path $env:USERPROFILE\.ssh\id_ed25519.pub
@@ -125,7 +128,7 @@ $remotePowershell = "powershell New-Item -Force -ItemType Directory -Path $env:U
 ssh username@domain1@contoso.com $remotePowershell
 ```
 
-Or to **administrators_authorized_keys** in **C:\ProgramData\ssh\ ** for **administrative user**
+And for **administrative user**
 ```powershell
 # Get the public key file generated previously on your client
 $authorizedKey = Get-Content -Path $env:USERPROFILE\.ssh\id_ed25519.pub
