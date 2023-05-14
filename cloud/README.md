@@ -29,7 +29,9 @@ Contains images and gfx artifacts used in docs
 - [How-to setup ArgoCD and MicroK8s on a laptop](docs/en-US/Multipass-HowtoSetupArgoCDinMicroK8sOnLaptop.md)
   - Use Multipass to install MicroK8s Kubernetes
   - Setup ArgoCD to pull a github repository
-
+- [SSH Access](docs/en-US/Multipass-SSHAccess.md)
+  - How-to generate SSH keypair and use it to connect to Multipass VMs
+  
 **MicroK8s**:
 - [How-to install MicroK8s](docs/en-US/MicroK8s-HowtoInstall.md)
   - How-to install MicroK8s

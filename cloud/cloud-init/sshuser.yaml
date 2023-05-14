@@ -1,0 +1,6 @@
+users:
+  - default
+  - name: myuser
+    sudo: ALL=(ALL) NOPASSWD:ALL
+    ssh_authorized_keys:
+    - ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIDOUfb4ie1YyGfBJyOC3XzQAn+QeGnepdijc5n/RW50f myuser
