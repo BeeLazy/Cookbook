@@ -309,11 +309,30 @@ bee@multipassus:~$ ip a
     link/ether c2:f1:84:65:2b:36 brd ff:ff:ff:ff:ff:ff
 ```
 
-Open a shell to the VM, and test network connectivity:
+Open a shell to the VM, and check that the network interfaces got created:
 ```console
 bee@multipassus:~$ multipass shell vigilant-sheep
 Welcome to Ubuntu 22.04.2 LTS (GNU/Linux 5.15.0-72-generic x86_64)
 
+ubuntu@vigilant-sheep:~$ ip a
+2: enp5s0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc mq state UP group default qlen 1000
+    link/ether 52:54:00:30:39:85 brd ff:ff:ff:ff:ff:ff
+    inet 10.71.63.2/24 metric 100 brd 10.71.63.255 scope global dynamic enp5s0
+       valid_lft 3518sec preferred_lft 3518sec
+    inet6 fd42:14b6:93d6:bcb5:5054:ff:fe30:3985/64 scope global mngtmpaddr noprefixroute
+       valid_lft forever preferred_lft forever
+    inet6 fe80::5054:ff:fe30:3985/64 scope link
+       valid_lft forever preferred_lft forever
+3: enp6s0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc mq state UP group default qlen 1000
+    link/ether 52:54:00:22:75:49 brd ff:ff:ff:ff:ff:ff
+    inet 192.168.0.212/24 metric 200 brd 192.168.0.255 scope global dynamic enp6s0
+       valid_lft 86320sec preferred_lft 86320sec
+    inet6 fe80::5054:ff:fe22:7549/64 scope link
+       valid_lft forever preferred_lft forever
+```
+
+Test network connectivity to the gateway and internet. And a dns lookup while we're at it:
+```console
 ubuntu@vigilant-sheep:~$ ping 192.168.0.1
 PING 192.168.0.1 (192.168.0.1) 56(84) bytes of data.
 64 bytes from 192.168.0.1: icmp_seq=1 ttl=64 time=1.16 ms
