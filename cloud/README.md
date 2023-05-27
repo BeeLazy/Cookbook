@@ -46,6 +46,8 @@ Contains images and gfx artifacts used in docs
 	- Access clustered Kubernetes service with MetalLB
 - [Setup certificate management](docs/en-US/MicroK8s-CertManager.md)
   - Use cert-manager to automatically manage Let's Encrypt certificates
+- [Bridging Multipass](docs/en-US/Multipass-Bridging.md)
+  - Setup a network bridge and launch VMs on the same subnet as the Multipass host
 
 **LXD**:
 - [How-to install LXD](docs/en-US/LXD-HowtoInstall.md)
