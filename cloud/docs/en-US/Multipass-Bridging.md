@@ -358,6 +358,176 @@ PING vigilant-sheep (192.168.0.212) 56(84) bytes of data.
 
 This is looking good so far!
 
+## Example Deployment <a id="example-deployment"></a>
+Let's see how all this works with a practical example.  
+
+We will deploy ArgoCD and then setup Ingress with an EXTERNAL-IP from MetalLB to route traffic to the ArgoCD Dashboard.  
+
+First deploy a VM with ArgoCD. Remember to add **--network br0** so it uses our bridge:
+```console
+bee@multipassus:~$ wget https://raw.githubusercontent.com/BeeLazy/Cookbook/main/cloud/cloud-init/MicroK8s-ArgoCD-2.7.1.yaml
+2023-05-28 12:31:31 (37.2 MB/s) - ‘MicroK8s-ArgoCD-2.7.1.yaml’ saved [2726/2726]
+
+bee@multipassus:~$ multipass launch --cloud-init MicroK8s-ArgoCD-2.7.1.yaml \
+--timeout 1200 \
+--name argolab271 \
+--memory 12G \
+--cpus 6 \
+--disk 50G \
+--network br0
+Launched: argolab271
+```
+
+Check that it got created with IP on our bridge subnet **192.168.0.0/24**:
+```console
+bee@multipassus:~$ multipass list
+Name                    State             IPv4             Image
+argolab271              Running           10.71.63.149     Ubuntu 22.04 LTS
+                                          192.168.0.206
+                                          10.1.197.64
+```
+
+Next open a **shell** to the VM:
+```console
+bee@multipassus:~$ multipass shell argolab271
+Welcome to Ubuntu 22.04.2 LTS (GNU/Linux 5.15.0-72-generic x86_64)
+ubuntu@argolab271:~$
+```
+
+And enable **addons** we need:
+```console
+ubuntu@argolab271:~$ microk8s enable ingress
+Ingress is enabled
+
+ubuntu@argolab271:~$ microk8s enable metallb
+Infer repository core for addon metallb
+Enabling MetalLB
+Enter each IP address range delimited by comma (e.g. '10.64.140.43-10.64.140.49,192.168.0.105-192.168.0.111'): 192.168.0.131-192.168.0.140
+MetalLB is enabled
+
+ubuntu@argolab271:~$ microk8s enable rbac
+RBAC is enabled
+
+ubuntu@argolab271:~$ microk8s enable cert-manager
+Enabled cert-manager
+```
+
+Create a certificate **ClusterIssuer**:
+```console
+microk8s kubectl apply -f - <<EOF
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+ name: lets-encrypt
+spec:
+ acme:
+   # The email must be changed to a valid address
+   email: user@example.com
+   server: https://acme-v02.api.letsencrypt.org/directory
+   privateKeySecretRef:
+     # Secret resource that will be used to store the account's private key.
+     name: lets-encrypt-private-key
+   # Add a single challenge solver, HTTP01 using nginx
+   solvers:
+   - http01:
+       ingress:
+         class: public
+EOF
+```
+
+> :warning: **Note:** Remember to change the **email** to your own.  
+
+Create the **MetalLB** loadbalancer config.  
+
+Contents of nginx-ingress-metallb.yaml
+```yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: ingress
+  namespace: ingress
+spec:
+  selector:
+    name: nginx-ingress-microk8s
+  type: LoadBalancer
+  # loadBalancerIP is optional. MetalLB will automatically allocate an IP from its pool if not
+  # specified. You can also specify one manually.
+  # loadBalancerIP: x.y.z.a
+  ports:
+    - name: http
+      protocol: TCP
+      port: 80
+      targetPort: 80
+    - name: https
+      protocol: TCP
+      port: 443
+      targetPort: 443
+```
+
+Apply the loadbalancer config:
+```console
+ubuntu@argolab271:~$ microk8s kubectl create -f nginx-ingress-metallb.yaml
+service/ingress created
+```
+
+Check what **EXTERNAL-IP** the loadbalancer got:
+```console
+ubuntu@argolab271:~$ microk8s kubectl -n ingress get svc
+ubuntu@argolab271:~$ microk8s kubectl -n ingress get svc
+NAME      TYPE           CLUSTER-IP       EXTERNAL-IP     PORT(S)                      AGE
+ingress   LoadBalancer   10.152.183.235   192.168.0.131   80:31165/TCP,443:31374/TCP   15s
+```
+
+Not very surprisingly, it got the first IP from the IP pool we assigned to MetalLB; **192.168.0.131**  
+
+For this to be reachable from the internet, I've added the entry **argocd-1.the-bee.site** to my external DNS, and 
+I have added portforwarding rules on my external router, so traffic on port **80** and **443** get routed to our 
+loadBalancerIP **192.168.0.131**:
+
+![External router portmapping](../../img/multipass-externalrouterportmapping.png "External router portmapping")
+
+Finally create an **Ingress** pointing the DNS entry to the service. Let ssl passthru to the service:
+```console
+microk8s kubectl apply -n argocd -f - <<EOF
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+ name: argocd-1-ingress
+ annotations:
+   cert-manager.io/cluster-issuer: lets-encrypt
+   nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+   nginx.ingress.kubernetes.io/backend-protocol: "HTTPS"
+spec:
+ ingressClassName: nginx
+ tls:
+ - hosts:
+   - argocd-1.the-bee.site
+   secretName: argocd-1-ingress-tls
+ rules:
+ - host: argocd-1.the-bee.site
+   http:
+     paths:
+     - backend:
+         service:
+           name: argocd-server
+           port:
+             number: 443
+       path: /
+       pathType: Prefix
+EOF
+```
+
+Verify that certificate was created successfully:
+```console
+ubuntu@argolab271:~$ kubectl get certificate -A
+NAMESPACE   NAME                   READY   SECRET                 AGE
+argocd      argocd-1-ingress-tls   True    argocd-1-ingress-tls   28s
+```
+
+The site should now be reachable from internet at **https://argocd-1.the-bee.site**:
+
+![ArgoCD login](../../img/multipass-bridgingargocdlogin.png "ArgoCD login")
+
 ## Related links <a id="related-links"></a>
 [multipass networks command - multipass.run](https://multipass.run/docs/networks-command)  
 [Bridging Multipass - multipass.run](https://multipass.run/docs/create-an-instance#heading--bridging)  
