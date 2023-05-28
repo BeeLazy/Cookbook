@@ -23,7 +23,8 @@ perfect.
 7. [Install LXD](#install-lxd)
 8. [Connect Multipass to LXD](#connect-multipass-to-lxd)
 9. [Test network bridge](#test-network-bridge)
-10. [Related links](#related-links)
+10. [Example Deployment](#example-deployment)
+11. [Related links](#related-links)
 
 ## What is a bridge <a id="what-is-a-bridge"></a>
 In the 2004 version of the [IEEE 802.1 standard](https://ieeexplore.ieee.org/document/1309630) a **bridge** was defined as:
