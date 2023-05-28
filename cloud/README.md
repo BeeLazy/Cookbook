@@ -31,7 +31,9 @@ Contains images and gfx artifacts used in docs
   - Setup ArgoCD to pull a github repository
 - [SSH Access](docs/en-US/Multipass-SSHAccess.md)
   - How-to generate SSH keypair and use it to connect to Multipass VMs
-  
+- [Bridging Multipass](docs/en-US/Multipass-Bridging.md)
+  - Setup a network bridge and launch VMs on the same subnet as the Multipass host
+
 **MicroK8s**:
 - [How-to install MicroK8s](docs/en-US/MicroK8s-HowtoInstall.md)
   - How-to install MicroK8s
@@ -46,8 +48,6 @@ Contains images and gfx artifacts used in docs
 	- Access clustered Kubernetes service with MetalLB
 - [Setup certificate management](docs/en-US/MicroK8s-CertManager.md)
   - Use cert-manager to automatically manage Let's Encrypt certificates
-- [Bridging Multipass](docs/en-US/Multipass-Bridging.md)
-  - Setup a network bridge and launch VMs on the same subnet as the Multipass host
 
 **LXD**:
 - [How-to install LXD](docs/en-US/LXD-HowtoInstall.md)
